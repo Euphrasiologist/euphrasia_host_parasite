@@ -1,20 +1,26 @@
 #### Fitness of a Euphrasia species on many hosts ####
 # Created: 7.8.18 by Max Brown #
+# Major update: 11.7.19 # 
 
 ## Libraries needed ##
 
+library(ape)
+library(MCMCglmm)
+library(data.table)
+library(VCVglmm)
+
 library(plyr) 
 library(dplyr) 
-library(data.table)
+
 library(tibble) 
 library(ggplot2) 
 library(lattice) 
 library(tidyr) 
-library(ape)
+
 library(phangorn) 
 library(ggtree)
 library(ggstance) 
-library(MCMCglmm)
+
 library(lme4)
 library(broom.mixed)
 library(Hmisc)
@@ -294,53 +300,45 @@ probit2prob <- function(probit){
 
 # Wald tests of fixed effects for significance of functional group and annual/perennial.
 
-# The phylogeny is constrained using the reference tree
+# The phylogeny is constrained using the reference tree.
 
 
 ##### Part 1: Prepare tree for models at first flowering #####
+
 # constraint tree output
 constraint <- read.tree(text = "(Agrostis_capillaris:0.0103868960,Lagurus_ovatus:0.0137334981,((((Cynosurus_cristatus:0.0119501076,Festuca_rubra:0.0143927581)56:0.0014297595,Holcus_lanatus:0.0116621244)61:0.0018419113,Phleum_pratense:0.0106048521)100:0.0080082346,((Zea_mays:0.0376747406,((((Allium_ursinum:0.0696170091,Galanthus_nivalis:0.0548052238)amaryllidaceae/100:0.0011547212,Hyacinthoides_non_scripta:0.0509074406)100:0.0322710961,Dactylorhiza_purpurella:0.0989415971)asparagales/100:0.0128940050,((((((Sorbus_aucuparia:0.0314958348,Fragaria_vesca:0.0582563355)rosaceae/100:0.0349788544,((((Ononis_spinosa:0.0220743766,(Lathyrus_japonicus:0.0294240865,Trifolium_pratense:0.0339786483)100:0.0021655535)100:0.0183607112,Lotus_corniculatus:0.0850694608)100:0.0000019136,Ulex_europaeus:0.0718966448)100:0.0000027395,Vicia_cracca:0.0479406736)fabaceae/100:0.0785149642)100:0.0148394884,(Arabidopsis_thaliana:0.1250612607,Helianthemum_nummularium:0.1469119452)malvales_to_brassicales/100:0.0195592609)100:0.0150299043,((((((Meum_athamanticum:0.0221268430,Anthriscus_sylvestris:0.0221983048)apiaceae/100:0.0502387307,Centranthus_ruber:0.1162127616)100:0.0022623680,((Centaurea_nigra:0.0172220154,(Leucanthemum_vulgare:0.0331192970,Tragopogon_pratensis:0.0182447955)100:0.0000023339)100:0.0048658069,Senecio_vulgaris:0.0209331617)asteraceae/100:0.0535848492)100:0.0118251564,(((Thymus_polytrichus:0.0579324847,Mimulus_guttatus:0.0360518925)100:0.0082342727,Plantago_lanceolata:0.0899883709)100:0.0336066248,(Galium_aparine:0.0100601356,Galium_verum:0.0102328988)galium/100:0.1193345682)100:0.0185788636)100:0.0088343295,Erica_tetralix:0.1160061555)ericales_to_asterales/100:0.0079753034,(((Chenopodium_album:0.0332635734,Chenopodium_bonus_henricus:0.0105604686)chenopodium/100:0.0238607464,(Silene_dioica:0.0014311631,Silene_latifolia:0.0000024274)silene/100:0.0808030168)100:0.0364786972,Rumex_acetosella:0.1210989875)caryophyllales/100:0.0287067285)100:0.0088664052)100:0.0236664505,Papaver_rhoeas:0.1015330721)eudicots/100:0.0318216294,(Pinus_sylvestris:0.2367123693,(Equisetum_arvense:0.3878874112,(Cystopteris_fragilis:0.1233674528,Pteridium_aquilinum:0.1016667919)100:1.0445751830)100:0.2401868160)seedplants/100:0.1314408258)poales_to_asterales/100:0.0454413537)100:0.1494656671)100:0.0242458362,Hordeum_vulgare:0.0237302454)93:0.0060960686)poaceae/100:0.0096602096);")
 
-
+# remove the underscores
 constraint$tip.label <- gsub("_", " ", constraint$tip.label) 
+# correct the tip labels
 constraint$tip.label[10] <- "Hyacinthoides non-scripta"
 constraint$tip.label[36] <- "Chenopodium bonus-henricus"
 constraint$tip.label[43] <- "Cystopteris dickieana"
 
-# constraint.1 remember
-constraint.1<-drop.tip(constraint, tip = sptodel)
+# Remove tips that do not occur in the data.
+constraint.1<-drop.tip(constraint, tip = c("Dactylorhiza purpurella", "Thymus polytrichus", "Pteridium aquilinum"))
 constraint.1$node.label <- NULL
-# root tree
-constraint.1 <- root(phy = constraint.1, outgroup = "Cystopteris dickieana", resolve.root = T)
+# root tree @ Cystopteris.
+constraint.1 <- root(phy = constraint.1, outgroup = "Cystopteris dickieana", resolve.root = TRUE)
+# edge cannot be zero, so make it tiny
 constraint.1$edge.length[1] <- 1e-10
-
-varcons1<-mean(diag(vcv(constraint.1)))
-
-INphylo2 <- inverseA(constraint.1, nodes = "ALL", scale = FALSE) # only scale if tree1 <- chronoMPL(tree1)
-# we want the Ainv object
-
-Ainv2 <- INphylo2$Ainv
-# convert to matrix
-
-Ainv2<- as.matrix(Ainv2)
-# convert to a sparse matrix
-
-Ainv2 <- as(Ainv2, "dgCMatrix")
-
 
 # comparison of chronoMPL, ultrametric and the difference it makes
 # the second is the more realistic and not different from 
 # the mean(diag(vcv(tree)))*VCV`animal` method
-AinvULT <- ultm(constraint.1, MPL = F, inverseA = T)
+
+# create oject for MCMCglmm model
+AinvULT <- ultm(constraint.1, MPL = FALSE, inverseA = TRUE)
 
 
 
-##### tree 2 #####
-# second tree
+##### Part 2: Prepare tree for models at end of season growth #####
 
 # load in tree
 constraint.2 <- read.tree(text = "(Agrostis_capillaris:0.0103868960,Lagurus_ovatus:0.0137334981,((((Cynosurus_cristatus:0.0119501076,Festuca_rubra:0.0143927581)56:0.0014297595,Holcus_lanatus:0.0116621244)61:0.0018419113,Phleum_pratense:0.0106048521)100:0.0080082346,((Zea_mays:0.0376747406,((((Allium_ursinum:0.0696170091,Galanthus_nivalis:0.0548052238)amaryllidaceae/100:0.0011547212,Hyacinthoides_non_scripta:0.0509074406)100:0.0322710961,Dactylorhiza_purpurella:0.0989415971)asparagales/100:0.0128940050,((((((Sorbus_aucuparia:0.0314958348,Fragaria_vesca:0.0582563355)rosaceae/100:0.0349788544,((((Ononis_spinosa:0.0220743766,(Lathyrus_japonicus:0.0294240865,Trifolium_pratense:0.0339786483)100:0.0021655535)100:0.0183607112,Lotus_corniculatus:0.0850694608)100:0.0000019136,Ulex_europaeus:0.0718966448)100:0.0000027395,Vicia_cracca:0.0479406736)fabaceae/100:0.0785149642)100:0.0148394884,(Arabidopsis_thaliana:0.1250612607,Helianthemum_nummularium:0.1469119452)malvales_to_brassicales/100:0.0195592609)100:0.0150299043,((((((Meum_athamanticum:0.0221268430,Anthriscus_sylvestris:0.0221983048)apiaceae/100:0.0502387307,Centranthus_ruber:0.1162127616)100:0.0022623680,((Centaurea_nigra:0.0172220154,(Leucanthemum_vulgare:0.0331192970,Tragopogon_pratensis:0.0182447955)100:0.0000023339)100:0.0048658069,Senecio_vulgaris:0.0209331617)asteraceae/100:0.0535848492)100:0.0118251564,(((Thymus_polytrichus:0.0579324847,Mimulus_guttatus:0.0360518925)100:0.0082342727,Plantago_lanceolata:0.0899883709)100:0.0336066248,(Galium_aparine:0.0100601356,Galium_verum:0.0102328988)galium/100:0.1193345682)100:0.0185788636)100:0.0088343295,Erica_tetralix:0.1160061555)ericales_to_asterales/100:0.0079753034,(((Chenopodium_album:0.0332635734,Chenopodium_bonus_henricus:0.0105604686)chenopodium/100:0.0238607464,(Silene_dioica:0.0014311631,Silene_latifolia:0.0000024274)silene/100:0.0808030168)100:0.0364786972,Rumex_acetosella:0.1210989875)caryophyllales/100:0.0287067285)100:0.0088664052)100:0.0236664505,Papaver_rhoeas:0.1015330721)eudicots/100:0.0318216294,(Pinus_sylvestris:0.2367123693,(Equisetum_arvense:0.3878874112,(Cystopteris_fragilis:0.1233674528,Pteridium_aquilinum:0.1016667919)100:1.0445751830)100:0.2401868160)seedplants/100:0.1314408258)poales_to_asterales/100:0.0454413537)100:0.1494656671)100:0.0242458362,Hordeum_vulgare:0.0237302454)93:0.0060960686)poaceae/100:0.0096602096);")
+# remove underscores
 constraint.2$tip.label <- gsub("_", " ", constraint.2$tip.label) 
+# correct tip label names
 constraint.2$tip.label[10] <- "Hyacinthoides non-scripta"
 constraint.2$tip.label[36] <- "Chenopodium bonus-henricus"
 constraint.2$tip.label[43] <- "Cystopteris dickieana"
@@ -348,72 +346,67 @@ constraint.2$node.label <- NULL
 
 
 # root tree
-constraint.2 <- root(phy = constraint.2, outgroup = "Pteridium aquilinum", resolve.root = T)
+constraint.2 <- root(phy = constraint.2, outgroup = "Pteridium aquilinum", resolve.root = TRUE)
+# make sure there are no zero values
 constraint.2$edge.length[1] <- 1e-10
 
-varcons2<-mean(diag(vcv(constraint.2)))
+# create the object for MCMCglmm model 
+AinvULT2 <- ultm(constraint.2, MPL = FALSE, inverseA = TRUE)
 
-INphylo <- inverseA(constraint.2, nodes = "ALL", scale = FALSE)
-# we want the Ainv object
-Ainv<-INphylo$Ainv
-# convert to matrix
-Ainv<-as.matrix(Ainv)
-# convert to a sparse matrix
-Ainv <- as(Ainv, "dgCMatrix")
-
-AinvULT2 <- ultm(constraint.2, MPL = F, inverseA = T)
-
-
-## sort out all datasets up here ##
-
-##### At first flowering #####
+##### Part 3: Models at first flowering #####
 
 # load data
-floweringsofar<- read.csv("/Users/mbrown/Documents/Edinburgh Ph.D./GROWTH EXPT DATA/FloweringsofarV2.csv", na.strings = "-")
-setDT(floweringsofar)
+floweringsofar<- fread("./Data/Many_hosts/FloweringsofarV2.csv")
+# Add underscores to spaces
+colnames(floweringsofar) <- gsub(pattern = " ", replacement = "_", x = colnames(floweringsofar))
+
 # some data preparation first
-# create host no host variable 
-floweringsofar$Host.No.Host<-as.numeric(floweringsofar$ID_No > 0)
+# make columns factors
+names_factors <- colnames(floweringsofar)
+for (col in names_factors) set(floweringsofar, j=col, value=as.factor(floweringsofar[[col]]))
+# days to flower and corolla length change to numeric
+names_numeric <- c("Days_since_germination", "Corolla_Length")
+for (col in names_numeric) set(floweringsofar, j=col, value=as.numeric(floweringsofar[[col]]))
+
 # relevel so perennial is the baseline
 floweringsofar$AnnPer <- relevel(floweringsofar$AnnPer, ref = "Per")
 # relevel so grass is baseline
-floweringsofar$Functional.group <- relevel(floweringsofar$Functional.group, ref = "Grass")
-# make host no host a factor
-floweringsofar$Host.No.Host<- as.factor(floweringsofar$Host.No.Host)
-# relevel so that 1 is the host baseline
-floweringsofar$Host.No.Host <- relevel(floweringsofar$Host.No.Host, ref = "1")
+floweringsofar$Functional_group <- relevel(floweringsofar$Functional_group, ref = "Grass")
+
+# change name of Cystopteris dickieana
+levels(floweringsofar$Host_Species)[10] <- "Cystopteris dickieana"
+# remove no host
+floweringsofar <- floweringsofar[Host_Species != "No host"]
+floweringsofar$Host_Species <- factor(floweringsofar$Host_Species)
+
 # create 'animal' the phylogenetic random effect variable
-floweringsofar$animal <- floweringsofar$Host.Species
+floweringsofar$animal <- floweringsofar$Host_Species
 
-# summary stats for corolla length
 
-# 
-summary(floweringsofar[, .(Mean.Corolla = mean(na.omit(Corolla.Length))), by = "Host.Species"][order(-Mean.Corolla)])
-
-# corolla length
+## COROLLA LENGTH ##
 prior.1 <- list(R=list(V=diag(1), nu=0.002), 
                 G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
                        G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
 
 # fixed effects estimates for both annual/perennial and functional group
-mcmcfix1 <- MCMCglmm(Corolla.Length ~ AnnPer + Functional.group, 
-                     random = ~Host.Species + animal, 
+mcmcfix1 <- MCMCglmm(Corolla_Length ~ AnnPer + Functional_group, 
+                     random = ~ Host_Species + animal, 
                      ginverse = list(animal = AinvULT),
-                     data = floweringsofar[floweringsofar$Host.Species != "No host",],
+                     data = floweringsofar,
                      prior = prior.1,
                      family= "gaussian",
                      nitt = 13000*10,
                      burnin = 3000*10,
                      thin = 10*10,
-                     pr=T,
-                     verbose = T)
+                     pr=TRUE,
+                     verbose = TRUE)
 
 
 # summary output
 summary(mcmcfix1)
 
-write.csv(x = summary(mcmcfix1)$solutions,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Corolla_length/Corolla_solutions.csv")
+write.csv(x = specify_decimal(summary(mcmcfix1)$solutions, 4),
+          file = "./Data/Many_hosts/Model_outputs/Corolla_length/Corolla_solutions.csv")
 
 # joint phylogenetic distribution
 # 66.5%
@@ -421,7 +414,7 @@ write.csv(
   list(posterior.mode(as.mcmc(rowSums(mcmcfix1$VCV[,c(1,2)])/rowSums(mcmcfix1$VCV))),
        # 18.5% - 80.4%
        HPDinterval(as.mcmc(rowSums(mcmcfix1$VCV[,c(1,2)])/rowSums(mcmcfix1$VCV)))), 
-  file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Corolla_length/Joint_Phylogeny_Variance.csv")
+  file = "./Data/Many_hosts/Model_outputs/Corolla_length/Joint_Phylogeny_Variance.csv")
 
 # and the phylogenetic component
 # 60.2%
@@ -429,22 +422,22 @@ write.csv(
   list(posterior.mode(as.mcmc((mcmcfix1$VCV[,c(2)])/rowSums(mcmcfix1$VCV))),
        # 9.41% - 80.6%
        HPDinterval(as.mcmc((mcmcfix1$VCV[,c(2)])/rowSums(mcmcfix1$VCV)))), 
-  file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Corolla_length/Phylogeny_Variance.csv")
+  file = "./Data/Many_hosts/Model_outputs/Corolla_length/Phylogeny_Variance.csv")
 
 
-# host variance
+# host variance (v. low)
 posterior.mode(as.mcmc((mcmcfix1$VCV[,c(1)])/rowSums(mcmcfix1$VCV)))
 HPDinterval(as.mcmc((mcmcfix1$VCV[,c(1)])/rowSums(mcmcfix1$VCV)))
 
 
 # wald test of annual/perennial
 write.csv(x = aod::wald.test(cov(mcmcfix1$Sol[,2, drop=F]), colMeans(mcmcfix1$Sol[,2, drop=F]), Terms=1)$result, 
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Corolla_length/AnnPer_Wald_Test.csv")
+          file = "./Data/Many_hosts/Model_outputs/Corolla_length/AnnPer_Wald_Test.csv")
 # wald test of functional group
 write.csv(x = aod::wald.test(cov(mcmcfix1$Sol[,3:6, drop=F]), colMeans(mcmcfix1$Sol[,3:6, drop=F]), Terms=1:4)$result, 
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Corolla_length/Functional_Group_Wald_Test.csv")
+          file = "./Data/Many_hosts/Model_outputs/Corolla_length/Functional_Group_Wald_Test.csv")
 
-# days to flower
+## DAYS TO FLOWER ##
 
 prior.2 <- list(R=list(V=diag(1), nu=0.002), 
                 G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
@@ -453,38 +446,38 @@ prior.2 <- list(R=list(V=diag(1), nu=0.002),
 # fixed effects estimates for both annual/perennial and functional group
 # the random effects specification allows different variances for each functional group
 # but no covariances
-mcmcfix2<- MCMCglmm(Days.since.germination ~ AnnPer + Functional.group, 
-                    random = ~ Host.Species + animal, 
+mcmcfix2<- MCMCglmm(Days_since_germination ~ AnnPer + Functional_group, 
+                    random = ~ Host_Species + animal, 
                     ginverse = list(animal=AinvULT),
-                    data = floweringsofar[floweringsofar$Host.Species != "No host",],
+                    data = floweringsofar,
                     prior = prior.2,
                     family= "poisson",
                     nitt = 13000*10,
                     burnin = 3000*10,
                     thin = 10*10,
-                    pr=T,
-                    verbose = T)
+                    pr=TRUE,
+                    verbose = TRUE)
 
 
 # summary output
 summary(mcmcfix2)
 
-write.csv(x = summary(mcmcfix2)$solutions,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Days_to_flower/Days_solutions.csv")
+write.csv(x = specify_decimal(summary(mcmcfix2)$solutions, 4),
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Days_solutions.csv")
 
 # wald test of annual/perennial
 write.csv(x = aod::wald.test(cov(mcmcfix2$Sol[,2, drop=F]), colMeans(mcmcfix2$Sol[,2, drop=F]), Terms=1)$result,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Days_to_flower/AnnPer_Wald_Test.csv")
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/AnnPer_Wald_Test.csv")
 # wald test of functional group
 write.csv(x = aod::wald.test(cov(mcmcfix2$Sol[,3:6, drop=F]), colMeans(mcmcfix2$Sol[,3:6, drop=F]), Terms=1:4)$result,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Days_to_flower/Functional_Group_Wald_Test.csv")
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Functional_Group_Wald_Test.csv")
 
 # joint phylogenetic distribution
 # 33.3%
 write.csv(list(posterior.mode(as.mcmc(rowSums(mcmcfix2$VCV[,c(1,2)])/rowSums(mcmcfix2$VCV))),
                # 21.5% - 87.2%
                HPDinterval(as.mcmc(rowSums(mcmcfix2$VCV[,c(1,2)])/rowSums(mcmcfix2$VCV)))), 
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Days_to_flower/Joint_Phylogeny_Variance.csv")
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Joint_Phylogeny_Variance.csv")
 
 # and the phylogenetic component
 # 0.451%
@@ -494,26 +487,24 @@ write.csv(list(posterior.mode(as.mcmc((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV
           file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Days_to_flower/Phylogeny_Variance.csv")
 
 
-# host variance
+# host variance (v .low again)
 posterior.mode(as.mcmc((mcmcfix2$VCV[,c(1)])/rowSums(mcmcfix2$VCV)))
 HPDinterval(as.mcmc((mcmcfix2$VCV[,c(1)])/rowSums(mcmcfix2$VCV)))
 
-ggplot(as.data.frame((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV)), aes(x = var1))+geom_density(fill="black")+
-  theme_bw()
-
-##### event history analysis ######
+##### Part 4: Survival analysis (Event History Analysis) ######
 
 # May == 1, June == 2, July == 3, August == 4, September == 5
-survivaldata<- read.csv("/Users/mbrown/OneDrive - University of Edinburgh/Euphrasia Experiment 1 HOSTS/GROWTH EXPT DATA/Survivalanalysis3.csv")
-setDT(survivaldata)
+survivaldata<- fread("./Data/Many_hosts/Survivalanalysis3.csv")
+survivaldata
 # add time as a column in the data, i.e. at which time points was each individual Euphrasia alive
 survivaldata <- survivaldata[, Time := .(Time = 1:.N), by="Unique_ID"][Time < 6,]
+# a table of individuals alive (0) or dead (1)
 table(survivaldata$Time, survivaldata$y)
 
 # SPELL DICKIEANA PROPERLY
 
 # Average proability of death on each host
-survivaldata[, .(Mean = mean((y-1)*-1 )), by = c("Name")][order(Mean)]
+survivaldata[, .(Mean = mean((y-1)*-1 )), by = c("Name")][order(-Mean)]
 # numbers surviving at each time point
 survivaldata[, .(N = .N), by = c("Time")]
 # Average probability of death at eg time point 3
@@ -529,45 +520,41 @@ survivaldata[Time == 3, .("0" = sum(as.integer(y == 0)),
 
 
 # some data tidying
-survivaldata$Host.No.Host<-as.numeric(survivaldata$ID_No > 0)
 tmp <- as.POSIXlt(survivaldata$Latest.Germ.Date, format = "%d/%m/%y")
 survivaldata$Latest.Germ.Date<-tmp$yday
 
 tmp <- as.POSIXlt(survivaldata$Transplant.Date, format = "%d/%m/%y")
 survivaldata$Transplant.Date<-tmp$yday
 
-survivaldata$Host.No.Host<- as.factor(survivaldata$Host.No.Host)
-survivaldata$Host.No.Host <- relevel(survivaldata$Host.No.Host, ref = "1")
-survivaldata$Name <- relevel(survivaldata$Name, ref = "No host")
-
 # model 
-survivaldata.1<- data.frame(survivaldata.1) #needed!!
-survivaldata.1$animal <- survivaldata.1$Name
-levels(survivaldata.1$animal)[11] <- "Cystopteris dickieana"
-levels(survivaldata.1$animal)[44] <- "Ulex europaeus"
+survivaldata[, animal := as.factor(Name)]
+levels(survivaldata$animal)[10] <- "Cystopteris dickieana"
 
-tidy.g.n$Host.No.Host <- relevel(tidy.g.n$Host.No.Host, ref = "Host")
-tidy.g.n$Time <- as.integer(tidy.g.n$Time)
-tidy.g.n$Time <- relevel(tidy.g.n$Time, ref = "2")
-tidy.g.n$AnnPer <- relevel(tidy.g.n$AnnPer, ref = "Per")
-tidy.g.n$Functional.group <- relevel(tidy.g.n$Functional.group, ref = "Grass")
+# add annual perennial, functional group, and Nodes
+allgrowth <- fread("./Data/Many_hosts/Allgrowthmeasurements1.csv")
+colnames(allgrowth) <- gsub(pattern = " ", replacement = "_", x = colnames(allgrowth))
 
+# select the columns needed
+to_add <- allgrowth[, c("Unique_ID", "AnnPer", "Functional_group", "C.R.Nodes.F", "Family")]
 
-levels(tidy.g.n$Time) <- c("1", "2", "3", "4", "5")
+# merge datasets
+survivaldata.2 <- survivaldata[to_add, on = "Unique_ID"][Name != "No host"][Time < 5]
+# change name, time, annper and functional group, animal to factor
+names_factors2 <- c("Name", "Time", "AnnPer", "Functional_group", "animal")
+for (col in names_factors2) set(survivaldata.2, j=col, value=as.factor(survivaldata.2[[col]]))
 
-survivaldata.2<-dplyr::left_join(survivaldata.1, unique(tidy.g.n[,c(1,3,4,9,10)]), by = c("Unique_ID", "Time"))
-survivaldata.2$Time <- factor(survivaldata.2$Time)
-survivaldata.2 <- filter(survivaldata.2, as.numeric(Time) <= 4)
+# make sure the levels are levelled rightly
+survivaldata.2$AnnPer <- relevel(survivaldata.2$AnnPer, ref = "Per")
+survivaldata.2$Functional_group <- relevel(survivaldata.2$Functional_group, ref = "Grass")
+
+# probability of survival
+survivaldata.2$y <- (survivaldata.2$y -1)*-1 
 
 
 prior.eha <-list(R=list(V=diag(1), fix=1), 
                  G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
                         G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
-levels(survivaldata.2$Name)[11] <- "Cystopteris dickieana"
-levels(survivaldata.2$Name)[44] <- "Ulex europaeus"
-survivaldata.2$animal <- survivaldata.2$Name
 
-survivaldata.2$y2 <- (survivaldata.2$y -1)*-1 # probability of survival
 
 eha.1 <- MCMCglmm(y2 ~ 1 + Time+AnnPer+ Transplant.Date + Functional.group + Nodes,
                   random = ~Name + animal,
@@ -1348,51 +1335,51 @@ phylodat4$group <- phylodat4$Name
   
   
 ##### Correlations #####
-  
-  # correlations needed: days to flower:corolla length, days to flower:survival,
-  # days to flower:nodes, corolla length:survival, corolla length: nodes, nodes:survival
-  setDT(survivaldata.2); setDT(attime2.3); setDT(floweringsofar)
-  # make a data table of survival, nodes, corolla length and days to flower
-  a <- survivaldata.2[, .(Mean.survival = mean(y2)), by = "animal"][attime2.3[, .(Cumulative.nodes = mean(Cumulative.Nodes)), by = "animal"], on = "animal"]
-  corrr <- floweringsofar[, .(Mean.flowering = mean(Days.since.germination), Mean.corolla = mean(Corolla.Length)), by = "animal"][a , on = "animal"]
-  
-  #corrr$NAs <- apply(corrr, 1, function(x) sum(as.numeric(is.na(x))))
-  #corrr <- corrr[NAs == 0,]
-  # correlations
-  cor(corrr[, -c("animal")], method = "kendall", use = "pairwise.complete.obs")
-  
-  # only positive correlations are cumulative nodes and corolla length and
-  corrr2 <- unique(survivaldata.2[,c("Family", "animal")])[corrr, on = "animal"]
-  
-  corrr2$subFamily <- ifelse(test = corrr2$Family %in% c("Poaceae", "Fabaceae", "Asteraceae"),
-                             yes = corrr2$Family, no = "Other families")
-  
-  ggplot(corrr2, aes(y = Cumulative.nodes, x = Mean.survival))+geom_point(aes(colour = subFamily), size = 3)+
-    theme_bw() + ggrepel::geom_text_repel(aes(label = animal))
-  
-  # make a data table of survival, nodes, corolla length and days to flower for Unique_ID
-  a <- survivaldata.2[, .(Mean.survival = mean(y)), by = "Unique_ID"][attime2.3[, .(Cumulative.nodes = mean(Cumulative.Nodes)), by = "Unique_ID"], on = "Unique_ID"]
-  corrr <- floweringsofar[, .(Mean.flowering = mean(Days.since.germination), Mean.corolla = mean(Corolla.Length)), by = "Unique_ID"][a , on = "Unique_ID"]
-  
-  #corrr$NAs <- apply(corrr, 1, function(x) sum(as.numeric(is.na(x))))
-  #corrr <- corrr[NAs == 0,]
-  # correlations
-  cor(corrr[, -c("Unique_ID")], method = "kendall", use = "pairwise.complete.obs")
-  
-  # only positive correlations are cumulative nodes and corolla length and
-  corrr2 <- unique(survivaldata.2[,c("Family", "Unique_ID")])[corrr, on = "Unique_ID"]
-  corrr2$subFamily <- ifelse(test = corrr2$Family %in% c("Poaceae", "Fabaceae", "Asteraceae"),
-                             yes = corrr2$Family, no = "Other families")
-  
-  ggplot(corrr2, aes(x = Mean.survival, y = Cumulative.nodes))+geom_point(aes(colour = subFamily), size = 3)+
-    theme_bw()
-  
-  
-  
-  
-  
+
+# correlations needed: days to flower:corolla length, days to flower:survival,
+# days to flower:nodes, corolla length:survival, corolla length: nodes, nodes:survival
+setDT(survivaldata.2); setDT(attime2.3); setDT(floweringsofar)
+# make a data table of survival, nodes, corolla length and days to flower
+a <- survivaldata.2[, .(Mean.survival = mean(y2)), by = "animal"][attime2.3[, .(Cumulative.nodes = mean(Cumulative.Nodes)), by = "animal"], on = "animal"]
+corrr <- floweringsofar[, .(Mean.flowering = mean(Days.since.germination), Mean.corolla = mean(Corolla.Length)), by = "animal"][a , on = "animal"]
+
+#corrr$NAs <- apply(corrr, 1, function(x) sum(as.numeric(is.na(x))))
+#corrr <- corrr[NAs == 0,]
+# correlations
+cor(corrr[, -c("animal")], method = "kendall", use = "pairwise.complete.obs")
+
+# only positive correlations are cumulative nodes and corolla length and
+corrr2 <- unique(survivaldata.2[,c("Family", "animal")])[corrr, on = "animal"]
+
+corrr2$subFamily <- ifelse(test = corrr2$Family %in% c("Poaceae", "Fabaceae", "Asteraceae"),
+                           yes = corrr2$Family, no = "Other families")
+
+ggplot(corrr2, aes(y = Cumulative.nodes, x = Mean.survival))+geom_point(aes(colour = subFamily), size = 3)+
+  theme_bw() + ggrepel::geom_text_repel(aes(label = animal))
+
+# make a data table of survival, nodes, corolla length and days to flower for Unique_ID
+a <- survivaldata.2[, .(Mean.survival = mean(y)), by = "Unique_ID"][attime2.3[, .(Cumulative.nodes = mean(Cumulative.Nodes)), by = "Unique_ID"], on = "Unique_ID"]
+corrr <- floweringsofar[, .(Mean.flowering = mean(Days.since.germination), Mean.corolla = mean(Corolla.Length)), by = "Unique_ID"][a , on = "Unique_ID"]
+
+#corrr$NAs <- apply(corrr, 1, function(x) sum(as.numeric(is.na(x))))
+#corrr <- corrr[NAs == 0,]
+# correlations
+cor(corrr[, -c("Unique_ID")], method = "kendall", use = "pairwise.complete.obs")
+
+# only positive correlations are cumulative nodes and corolla length and
+corrr2 <- unique(survivaldata.2[,c("Family", "Unique_ID")])[corrr, on = "Unique_ID"]
+corrr2$subFamily <- ifelse(test = corrr2$Family %in% c("Poaceae", "Fabaceae", "Asteraceae"),
+                           yes = corrr2$Family, no = "Other families")
+
+ggplot(corrr2, aes(x = Mean.survival, y = Cumulative.nodes))+geom_point(aes(colour = subFamily), size = 3)+
+  theme_bw()
+
 ##### summary stats #####
   
-  allgrowth[, .(Mean_nodes = mean(C.R.Nodes.F),
-                SE_Nodes = sd(C.R.Nodes.F)/sqrt(.N)), by = "Functional.group"][order(-Mean_nodes)]
+allgrowth[, .(Mean_nodes = mean(C.R.Nodes.F),
+              SE_Nodes = sd(C.R.Nodes.F)/sqrt(.N)), by = "Functional.group"][order(-Mean_nodes)]
+
+# summary stats for corolla length
+# 
+summary(floweringsofar[, .(Mean.Corolla = mean(na.omit(Corolla.Length))), by = "Host.Species"][order(-Mean.Corolla)])
   
