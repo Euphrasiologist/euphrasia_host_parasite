@@ -1,5 +1,5 @@
 #### Fitness of a Euphrasia species on many hosts ####
-# Created: 7.8.18 by Max Brown
+# Created: 7.8.18 by Max Brown #
 
 ## Libraries needed ##
 
@@ -297,7 +297,7 @@ probit2prob <- function(probit){
 # The phylogeny is constrained using the reference tree
 
 
-##### tree 1 #####
+##### Part 1: Prepare tree for models at first flowering #####
 # constraint tree output
 constraint <- read.tree(text = "(Agrostis_capillaris:0.0103868960,Lagurus_ovatus:0.0137334981,((((Cynosurus_cristatus:0.0119501076,Festuca_rubra:0.0143927581)56:0.0014297595,Holcus_lanatus:0.0116621244)61:0.0018419113,Phleum_pratense:0.0106048521)100:0.0080082346,((Zea_mays:0.0376747406,((((Allium_ursinum:0.0696170091,Galanthus_nivalis:0.0548052238)amaryllidaceae/100:0.0011547212,Hyacinthoides_non_scripta:0.0509074406)100:0.0322710961,Dactylorhiza_purpurella:0.0989415971)asparagales/100:0.0128940050,((((((Sorbus_aucuparia:0.0314958348,Fragaria_vesca:0.0582563355)rosaceae/100:0.0349788544,((((Ononis_spinosa:0.0220743766,(Lathyrus_japonicus:0.0294240865,Trifolium_pratense:0.0339786483)100:0.0021655535)100:0.0183607112,Lotus_corniculatus:0.0850694608)100:0.0000019136,Ulex_europaeus:0.0718966448)100:0.0000027395,Vicia_cracca:0.0479406736)fabaceae/100:0.0785149642)100:0.0148394884,(Arabidopsis_thaliana:0.1250612607,Helianthemum_nummularium:0.1469119452)malvales_to_brassicales/100:0.0195592609)100:0.0150299043,((((((Meum_athamanticum:0.0221268430,Anthriscus_sylvestris:0.0221983048)apiaceae/100:0.0502387307,Centranthus_ruber:0.1162127616)100:0.0022623680,((Centaurea_nigra:0.0172220154,(Leucanthemum_vulgare:0.0331192970,Tragopogon_pratensis:0.0182447955)100:0.0000023339)100:0.0048658069,Senecio_vulgaris:0.0209331617)asteraceae/100:0.0535848492)100:0.0118251564,(((Thymus_polytrichus:0.0579324847,Mimulus_guttatus:0.0360518925)100:0.0082342727,Plantago_lanceolata:0.0899883709)100:0.0336066248,(Galium_aparine:0.0100601356,Galium_verum:0.0102328988)galium/100:0.1193345682)100:0.0185788636)100:0.0088343295,Erica_tetralix:0.1160061555)ericales_to_asterales/100:0.0079753034,(((Chenopodium_album:0.0332635734,Chenopodium_bonus_henricus:0.0105604686)chenopodium/100:0.0238607464,(Silene_dioica:0.0014311631,Silene_latifolia:0.0000024274)silene/100:0.0808030168)100:0.0364786972,Rumex_acetosella:0.1210989875)caryophyllales/100:0.0287067285)100:0.0088664052)100:0.0236664505,Papaver_rhoeas:0.1015330721)eudicots/100:0.0318216294,(Pinus_sylvestris:0.2367123693,(Equisetum_arvense:0.3878874112,(Cystopteris_fragilis:0.1233674528,Pteridium_aquilinum:0.1016667919)100:1.0445751830)100:0.2401868160)seedplants/100:0.1314408258)poales_to_asterales/100:0.0454413537)100:0.1494656671)100:0.0242458362,Hordeum_vulgare:0.0237302454)93:0.0060960686)poaceae/100:0.0096602096);")
 
