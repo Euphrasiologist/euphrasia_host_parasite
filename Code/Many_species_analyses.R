@@ -311,9 +311,9 @@ Solapply(manysp.3, HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code
 ##### Part 5: Differences in E.anglica and E. micrantha performance #####
 
 # subset data for micrantha
-
 rnodes_micrantha <- rnodes3[Euphrasia_sp2 %in% c("Euphrasia micrantha")]
 
+# prior for micrantha model
 prior.manysp.4 <- list(R=list(V=diag(1), nu=0.002), 
                        G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
                               G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
@@ -331,17 +331,16 @@ manysp.4<-MCMCglmm(Reproductive_nodes ~ Population,
                    nitt = 13000*10,
                    burnin = 3000*10,
                    thin = 10*10,
-                   pr=T,
-                   verbose = T)
+                   pr=TRUE,
+                   verbose = TRUE)
+
 # looks like Host more important thank host given pop
-
-
 write.csv(x = summary(manysp.4)$solutions,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/Model_Solutions.csv")
+          file = "./Data/Many_species/Model_outputs/Micrantha/Model_Solutions.csv")
 
 write.csv(x = specify_decimal(data.table(HOST = MCMCReppois(mod = manysp.4, y = "Host_code"),
                                          HOST_GIVEN_POPULATION = MCMCReppois(mod = manysp.4, y = "Host_given_population")), 6),
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/Variance_Components.csv")
+          file = "./Data/Many_species/Model_outputs/Micrantha/Variance_Components.csv")
 
 VCVdensity(manysp.4)+xlim(0, 1)
 
@@ -349,11 +348,11 @@ VCVdensity(manysp.4)+xlim(0, 1)
 
 write.csv(x = Solapply(manysp.4)[order(Grouped_Value)][, .(Variable = Variable,
                                                            Grouped_Value = exp(Grouped_Value))],
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/Posterior_Modes.csv")
+          file = "./Data/Many_species/Model_outputs/Micrantha/Posterior_Modes.csv")
 
 # significance of random effects
 # need to add Obs
-rnodes_micrantha$Obs <- as.factor(1:nrow(rnodes_micrantha)) # maybe do not add...
+rnodes_micrantha$Obs <- as.factor(1:nrow(rnodes_micrantha)) 
 
 # full model
 manysp.4LR1 <- glmer(Reproductive_nodes ~ Population + (1 | Host_code) + (1 | Host_given_population) + (1 | Obs),
@@ -376,12 +375,13 @@ write.csv(
     HOST_CODE = anova(manysp.4LR1, manysp.4LR2),
     # Host_given_population is significant
     HOST_GIVEN_POPULATION = anova(manysp.4LR1, manysp.4LR3), keep.rownames = TRUE
-  ), file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/LRTs_of_models.csv"
+  ), file = "./Data/Many_species/Model_outputs/Micrantha/LRTs_of_models.csv"
 )
 
-# subset data for anglica and repeat - NOTE NOT YET FINISHED
+# subset data for anglica and repeat
 rnodes_anglica <- rnodes3[Euphrasia_sp2 %in% c("Euphrasia anglica")]
 
+# prior for anglica
 prior.manysp.5 <- list(R=list(V=diag(1), nu=0.002), 
                        G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
                               G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
@@ -391,6 +391,7 @@ rnodes_anglica$Host_code <- factor(rnodes_anglica$Host_code)
 rnodes_anglica$Host_given_Euphrasia <- factor(rnodes_anglica$Host_given_Euphrasia)
 rnodes_anglica$Host_given_population <- factor(rnodes_anglica$Host_given_population)
 
+# 
 manysp.5<-MCMCglmm(Reproductive_nodes ~ Population,
                    random = ~ Host_code + Host_given_population,
                    family = "poisson",
@@ -399,50 +400,49 @@ manysp.5<-MCMCglmm(Reproductive_nodes ~ Population,
                    nitt = 13000*10,
                    burnin = 3000*10,
                    thin = 10*10,
-                   pr=T,
-                   verbose = T)
-# looks like Host more important than host given pop
+                   pr=TRUE,
+                   verbose = TRUE)
 
-
+# solutions
 write.csv(x = summary(manysp.5)$solutions,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/Model_Solutions.csv")
+          file = "./Data/Many_species/Model_outputs/Anglica/Model_Solutions.csv")
 
 write.csv(x = specify_decimal(data.table(HOST = MCMCReppois(mod = manysp.5, y = "Host_code"),
                                          HOST_GIVEN_POPULATION = MCMCReppois(mod = manysp.5, y = "Host_given_population")), 6),
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/Variance_Components.csv")
+          file = "./Data/Many_species/Model_outputs/Anglica/Variance_Components.csv")
 
 VCVdensity(manysp.4)+xlim(0, 1)
 
 # posterior modes?
 
-write.csv(x = Solapply(manysp.4)[order(Grouped_Value)][, .(Variable = Variable,
+write.csv(x = Solapply(manysp.5)[order(Grouped_Value)][, .(Variable = Variable,
                                                            Grouped_Value = exp(Grouped_Value))],
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/Posterior_Modes.csv")
+          file = "./Data/Many_species/Model_outputs/Anglica/Posterior_Modes.csv")
 
 # significance of random effects
 # need to add Obs
-rnodes_micrantha$Obs <- as.factor(1:nrow(rnodes_micrantha)) # maybe do not add...
+rnodes_anglica$Obs <- as.factor(1:nrow(rnodes_anglica)) 
 
 # full model
-manysp.4LR1 <- glmer(Reproductive_nodes ~ Population + (1 | Host_code) + (1 | Host_given_population) + (1 | Obs),
-                     family = "poisson", data = rnodes_micrantha)
+manysp.5LR1 <- glmer(Reproductive_nodes ~ Population + (1 | Host_code) + (1 | Host_given_population) + (1 | Obs),
+                     family = "poisson", data = rnodes_anglica)
 # is Host_code significant?
-manysp.4LR2 <- glmer(Reproductive_nodes ~ Population + (1 | Host_given_population) + (1 | Obs),
-                     family = "poisson", data = rnodes_micrantha)
+manysp.5LR2 <- glmer(Reproductive_nodes ~ Population + (1 | Host_given_population) + (1 | Obs),
+                     family = "poisson", data = rnodes_anglica)
 # is Host_given_population significant?
-manysp.4LR3 <- glmer(Reproductive_nodes ~ Population + (1 | Host_code) + (1 | Obs),
-                     family = "poisson", data = rnodes_micrantha)
+manysp.5LR3 <- glmer(Reproductive_nodes ~ Population + (1 | Host_code) + (1 | Obs),
+                     family = "poisson", data = rnodes_anglica)
 
-# Host_code is significant
-anova(manysp.4LR1, manysp.4LR2)
+# Host_code is not significant
+anova(manysp.5LR1, manysp.5LR2)
 # Host_given_code_Euphrasia is not significant
-anova(manysp.4LR1, manysp.4LR3)
+anova(manysp.5LR1, manysp.5LR3)
 
 write.csv(
   x = data.table(
     # Host_code is not significant
-    HOST_CODE = anova(manysp.4LR1, manysp.4LR2),
+    HOST_CODE = anova(manysp.5LR1, manysp.5LR2),
     # Host_given_population is significant
-    HOST_GIVEN_POPULATION = anova(manysp.4LR1, manysp.4LR3), keep.rownames = TRUE
-  ), file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Multiple_Euphrasia_sp/Micrantha/LRTs_of_models.csv"
+    HOST_GIVEN_POPULATION = anova(manysp.5LR1, manysp.5LR3), keep.rownames = TRUE
+  ), file = "./Data/Many_species/Model_outputs/Anglica/LRTs_of_models.csv"
 )
