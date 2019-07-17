@@ -1,0 +1,37 @@
+"","Variable","Grouped_Value"
+"1","Host_code.OVU",0.465474887224014
+"2","Host_code.HPU",0.502465607779165
+"3","Host_code.CVU",0.510227025610463
+"4","Host_code.HLA",0.548187562196725
+"5","Host_code.PMA",0.639661447625003
+"6","Host_code.UGA",0.715196226904414
+"7","Host_code.FOV",0.730621688919968
+"8","Host_code.DFL",0.806112263025004
+"9","Host_code.ACU",0.933423525181287
+"10","Host_given_Euphrasia.Euphrasia tetraquetra.PLA",0.983793590682393
+"11","Host_given_Euphrasia.Euphrasia tetraquetra.DFL",0.991739594171517
+"12","Host_given_Euphrasia.Euphrasia tetraquetra.LCO",0.995521210189905
+"13","Host_given_Euphrasia.Euphrasia vigursii.HLA",0.996172236558342
+"14","Host_given_Euphrasia.Euphrasia vigursii.FOV",0.996262650304954
+"15","Host_given_Euphrasia.Euphrasia vigursii.PMA",0.997654288452595
+"16","Host_given_Euphrasia.Euphrasia tetraquetra.FOV",0.99826839381047
+"17","Host_given_Euphrasia.Euphrasia vigursii.UGA",0.998533043671103
+"18","Host_given_Euphrasia.Euphrasia tetraquetra.HLA",0.998608533219584
+"19","Host_given_Euphrasia.Euphrasia vigursii.ACU",0.998635192194804
+"20","Host_given_Euphrasia.Euphrasia vigursii.OVU",0.998715085091118
+"21","Host_given_Euphrasia.Euphrasia vigursii.LPE",0.998816654918391
+"22","Host_given_Euphrasia.Euphrasia vigursii.HPU",0.998870298553634
+"23","Host_given_Euphrasia.Euphrasia tetraquetra.PMA",0.999109648857666
+"24","Host_given_Euphrasia.Euphrasia tetraquetra.UGA",0.999581462770822
+"25","Host_given_Euphrasia.Euphrasia vigursii.VCH",0.999636519407442
+"26","Host_given_Euphrasia.Euphrasia tetraquetra.OVU",0.999696143603572
+"27","Host_given_Euphrasia.Euphrasia tetraquetra.VCH",1.00141406823005
+"28","Host_given_Euphrasia.Euphrasia tetraquetra.ACU",1.0018309196669
+"29","Host_given_Euphrasia.Euphrasia vigursii.DFL",1.00283199881063
+"30","Host_given_Euphrasia.Euphrasia tetraquetra.LPE",1.00298893481023
+"31","Host_given_Euphrasia.Euphrasia tetraquetra.CVU",1.00477463553976
+"32","Host_given_Euphrasia.Euphrasia vigursii.LCO",1.0049482155273
+"33","Host_code.VCH",1.19851050220469
+"34","Host_code.PLA",1.44038580095244
+"35","Host_code.LPE",2.41791431096217
+"36","Host_code.LCO",6.42599175640272

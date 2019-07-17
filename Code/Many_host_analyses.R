@@ -1,4 +1,4 @@
-#### Fitness of a Euphrasia species on many hosts ####
+## Fitness of a Euphrasia species on many hosts ##
 # Created: 7.8.18 by Max Brown #
 # Major update: 11.7.19 # 
 
@@ -584,11 +584,11 @@ overtime %>%
 ##### Plot 5: Show the phylogenetic signal posterior distributions #####
 
   # ridge plot for the phylogenetic constribution to the four main traits. 
-  d1 <- data.table(Density =(mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV[,c(1,2)]),
+  d1 <- data.table(Density =rowSums(mcmcfix2$VCV[,c(1,2)])/rowSums(mcmcfix2$VCV),
                    Trait = as.factor(rep("Days to Flower (Poisson)", 1000)))
-  s1 <- data.table(Density =(eha.1$VCV[,c(2)])/rowSums(eha.1$VCV[,c(1,2)]),
-                   Trait = as.factor(rep("Survival (Threshold, logit)", 1000)))
-  r1 <- data.table(Density =(mcmcfix3$VCV[,c(2)])/rowSums(mcmcfix3$VCV[,c(1,2)]),
+  s1 <- data.table(Density =rowSums(eha.1$VCV[,c(1,2)])/rowSums(eha.1$VCV),
+                   Trait = as.factor(rep("Survival (Threshold, probit)", 1000)))
+  r1 <- data.table(Density =rowSums(mcmcfix3$VCV[,c(1,2)])/rowSums(mcmcfix3$VCV),
                    Trait = as.factor(rep("Total Reproductive Output (Poisson)", 1000)))
   final <- rbind(d1, s1, r1)
   final$Density <- as.numeric(final$Density)
