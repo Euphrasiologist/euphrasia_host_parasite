@@ -488,6 +488,26 @@ plot_1 <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")],
 ggsave(filename = "./Figures/Many_hosts/two_families_survival", plot = plot_1, 
        device = "pdf", width = 6, height = 5, units = "in")
 
+plot_1_group <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")], 
+                 aes(x=Time, y=y,group=Family))+
+  geom_point(alpha=0.1, position = position_jitter(width = 0.2, height = 0.2))+
+  #facet_wrap(~Family, scales = "free_x")+
+  geom_smooth(aes(x=Time, y=y, col = Family), 
+              method = "glm", 
+              method.args = list(family = "binomial"), 
+              se = TRUE, size = 1)+
+  ylim(c(0,1))+
+  theme_bw()+
+  ylab(label = "Probability of death")+
+  labs(colour = "Species")+
+  theme(axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.title = element_text(size = 20),
+        strip.background = element_blank(),
+        strip.text.x = element_text(size = 20))
+
+ggsave(filename = "./Figures/Many_hosts/two_families_survival_joined", plot = plot_1_group, 
+       device = "pdf", width = 6, height = 5, units = "in")
 
 ##### Plot 2: Reproductive nodes at end of season with phylogeny #####
 
