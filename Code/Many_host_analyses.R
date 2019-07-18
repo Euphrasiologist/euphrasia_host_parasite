@@ -466,8 +466,8 @@ model.matrix(mcmcfix4)
 survivaldata.2$Time <- as.numeric(survivaldata.2$Time)
 
 # this plot takes three largest families, two coincide with their own functional group
-ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae", "Asteraceae")], 
-       aes(x=Time, y=y,group=Name))+
+plot_1 <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")], 
+                 aes(x=Time, y=y,group=Name))+
   geom_point(alpha=0.1, position = position_jitter(width = 0.2, height = 0.2))+
   facet_wrap(~Family, scales = "free_x")+
   geom_smooth(aes(x=Time, y=y, col = Name), 
@@ -485,32 +485,29 @@ ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae", "Asteraceae")],
         strip.text.x = element_text(size = 20))
 
 
+ggsave(filename = "./Figures/Many_hosts/two_families_survival", plot = plot_1, 
+       device = "pdf", width = 6, height = 5, units = "in")
+
+
 ##### Plot 2: Reproductive nodes at end of season with phylogeny #####
 
 # create the ggtree object
 (p<-ggtree(phytools::force.ultrametric(constraint.2))+
     geom_tiplab(size = 4)+ theme(axis.line = element_blank())+
-    geom_cladelabel(node=64, label="Legumes", align=T, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
-    geom_cladelabel(node=53, label="Grasses", align=T, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5))
+    geom_cladelabel(node=64, label="Legumes", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
+    geom_cladelabel(node=53, label="Grasses", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5))
 # data to go with the tree
-setDT(attime2.1)
-phylodat<-attime2.1[,c("Host","Cumulative.Nodes", "Functional.group", "Family")]
-phylodat$group <- phylodat$Host
+phylodat<-allgrowth3[,c("Name","C.R.Nodes.F", "Functional_group", "Family")]
+phylodat$group <- phylodat$Name
 
-phylodat1.1 <- phylodat[, .(Mean.Cum = mean(na.omit(Cumulative.Nodes)),
-                            SD.Cum = sd(na.omit(Cumulative.Nodes))/sqrt(.N),
+# group the data by host species
+phylodat1.1 <- phylodat[, .(Mean.Cum = mean(na.omit(C.R.Nodes.F)),
+                            SD.Cum = sd(na.omit(C.R.Nodes.F))/sqrt(.N),
                             N = .N,
-                            Functional.group = (Functional.group),
-                            Family = (Family)), by = "Host"]
+                            Functional.group = (Functional_group),
+                            group = group,
+                            Family = (Family)), by = "Name"]
 phylodat1.1 <- unique(phylodat1.1)
-levels(phylodat1.1$Host)[10] <- "Cystopteris dickieana"
-levels(phylodat1.1$Host)[44] <- "Ulex europaeus"
-phylodat1.1$group = phylodat1.1$Host
-
-# make tip labels pretty
-p$data$label <- gsub(pattern = "_", replacement = " ", x = p$data$label)
-levels(phylodat$Host)[10] <- "Cystopteris dickieana"
-levels(phylodat$Host)[44] <- "Ulex europaeus"
 
 # for making the boxplots
 (finalplot<-facet_plot(p + xlim_tree(1.1), panel = "Cumulative Reproductive Nodes",
@@ -522,7 +519,7 @@ levels(phylodat$Host)[44] <- "Ulex europaeus"
                        geom = geom_errorbarh)+
     theme_tree2())
 # overlay the red observational points
-facet_plot(finalplot, panel = "Cumulative Reproductive Nodes",
+plot_2 <- facet_plot(finalplot, panel = "Cumulative Reproductive Nodes",
            data = phylodat1.1,
            mapping = aes(x=Mean.Cum, group = group),
            geom = geom_point, col = "red", size = 3)+
@@ -537,11 +534,13 @@ facet_plot(finalplot, panel = "Cumulative Reproductive Nodes",
   geom_hilight(node=31, fill="tomato", alpha=.2, extendto = 1.5)+
   geom_hline(yintercept = c(8.5, 16.5, 21.5, 27.5), lty =2, alpha = 0.3)
 
+ggsave(filename = "./Figures/Many_hosts/Cum_reprod_nodes_phylo", plot = plot_2, 
+       device = "pdf", width = 9, height = 7, units = "in")
 
 
 ##### Plot 3: Effect of annual/perennial over time (host life history) #####
 # reproductive nodes over time (for functional group and annual or perennial!)
-allgrowth5[, .(Nodes = mean(Nodes), uCI = mean(Nodes)+sd(Nodes)/sqrt(.N), lCI = mean(Nodes)-sd(Nodes)/sqrt(.N)), by = c("AnnPer", "Time")] %>%
+plot_3 <- allgrowth5[, .(Nodes = mean(Nodes), uCI = mean(Nodes)+sd(Nodes)/sqrt(.N), lCI = mean(Nodes)-sd(Nodes)/sqrt(.N)), by = c("AnnPer", "Time")] %>%
   ggplot(aes(x = Time, y= Nodes))+ 
   facet_wrap(~AnnPer)+
   geom_point()+
@@ -551,6 +550,9 @@ allgrowth5[, .(Nodes = mean(Nodes), uCI = mean(Nodes)+sd(Nodes)/sqrt(.N), lCI = 
   theme(strip.background = element_blank(), strip.text.x = element_text(size = 20),
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20))
+
+ggsave(filename = "./Figures/Many_hosts/ann_per_time", plot = plot_3, 
+       device = "pdf", width = 6, height = 5, units = "in")
 
 ##### Plot 4: What trajectory does an 'average' host follow over time? ######
 
@@ -568,7 +570,7 @@ overtime <- overtime[Name %in% c(as.character(first11), "Average Host")]
 overtime$Name <- factor(overtime$Name, levels = c(as.character(first11), "Average Host"))
 set(overtime, j="Time", value=as.numeric(overtime[["Time"]]))
 
-overtime %>%
+plot_4 <- overtime %>%
   ggplot(aes(x = Time, y= Nodes, group = Name))+ 
   facet_wrap(~Name)+
   geom_errorbar(aes(ymax = uCI, ymin =lCI), width = 0.05)+
@@ -580,6 +582,9 @@ overtime %>%
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20),
         legend.title = element_text(size = 20))
+
+ggsave(filename = "./Figures/Many_hosts/average_host", plot = plot_4, 
+       device = "pdf", width = 12.5, height = 7.5, units = "in")
 
 ##### Plot 5: Show the phylogenetic signal posterior distributions #####
 
@@ -597,6 +602,9 @@ overtime %>%
                                                     "Total Reproductive Output (Poisson)",
                                                     "Survival (Threshold, probit)"))
   
-  ggplot(final, aes(x = Density, y = Trait))+
+  plot_5 <- ggplot(final, aes(x = Density, y = Trait))+
     theme_bw()+geom_density_ridges()+geom_vline(xintercept = 0, col = "red", lty = 2, size = 1)+
     scale_x_continuous(limits = c(-0.2,1))
+
+ggsave(filename = "./Figures/Many_hosts/joint_variance_explained", plot = plot_5, 
+       device = "pdf", width = 6, height = 5, units = "in")

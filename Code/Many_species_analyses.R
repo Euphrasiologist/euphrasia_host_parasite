@@ -10,8 +10,8 @@ library(MCMCglmm)
 library(lme4)
 library(VCVglmm)
 
-Solapply <- function (model, FUN = posterior_mode, ...) 
-{
+# VCVglmm function not exporting properly... so rewrite here
+Solapply <- function (model, FUN = posterior_mode, ...) {
   if (attributes(model)$class != "MCMCglmm") {
     stop("Object not of class MCMCglmm")
   }
