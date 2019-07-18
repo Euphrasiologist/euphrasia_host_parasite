@@ -80,7 +80,7 @@ expt2dat.2 <- expt2dat.2[!is.na(expt2dat.2$Host_code)]
 
 # for experiment A (from here-on out). Replace "A" with "B" for experiment B
 # for a quick idea of how species are holistically reacting to each host.
-ggplot(expt2dat.2[grepl("A", Unique_ID)], aes(x=Host_code, y = Height))+
+plot_1.1 <- ggplot(expt2dat.2[grepl("A", Unique_ID)], aes(x=Host_code, y = Height))+
   geom_jitter(width = 0.25)+
   facet_wrap(~Euphrasia_sp2)+
   theme_bw()+
@@ -88,6 +88,9 @@ ggplot(expt2dat.2[grepl("A", Unique_ID)], aes(x=Host_code, y = Height))+
   theme(axis.text.x = element_text(angle = 40, hjust = 1))+
   ylab(label = "Height (mm)")+
   xlab(label = "Host species")
+
+ggsave(filename = "./Figures/Many_species/quick_visualisation", plot = plot_1.1, 
+       device = "pdf", width = 6, height = 5, units = "in")
 
 ##### Part 2: Add data on reproductive nodes at the end of the season #####
 
@@ -177,16 +180,19 @@ write.csv(
 
 ##### Plot 2: Posterior Modes of the interaction model #####
 
-Solapply(manysp.2, coda::HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_population")] %>%
+plot_2.1 <- Solapply(manysp.2, coda::HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_population")] %>%
   ggplot(aes(x = reorder(Variable, `Posterior Mode`), y = `Posterior Mode`))+
   geom_point()+
   geom_errorbar(aes(ymin = lowerHPD, ymax = upperHPD))+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 
+ggsave(filename = "./Figures/Many_species/posterior_interaction_modes_mod_1", plot = plot_2.1, 
+       device = "pdf", width = 21, height = 6, units = "in")
+
 ##### Plot 3: Raw data for the manuscript, means and SE's #####
 
-rnodes3[, .(mean = mean(Reproductive_nodes),
+plot_3.1<- rnodes3[, .(mean = mean(Reproductive_nodes),
             sem = sd(Reproductive_nodes)/sqrt(.N),
             N = .N), by = c("Euphrasia_sp2", "Host_code", "Population")] %>% #[Population != "M1767"]
   
@@ -207,9 +213,12 @@ rnodes3[, .(mean = mean(Reproductive_nodes),
   ylab(label = "Mean reproductive nodes at end of season")+
   scale_colour_discrete(name = "Euphrasia species")
 
+ggsave(filename = "./Figures/Many_species/population_cum_nodes", plot = plot_3.1, 
+       device = "pdf", width = 10, height = 6, units = "in")
+
 # just Euphrasia vigursii and tetraquetra, ready for model comparison
 
-rnodes3[, .(mean = mean(Reproductive_nodes),
+plot_3.2 <- rnodes3[, .(mean = mean(Reproductive_nodes),
             sem = sd(Reproductive_nodes)/sqrt(.N),
             N = .N), by = c("Euphrasia_sp2", "Host_code", "Population")][Euphrasia_sp2 %in% c("Euphrasia tetraquetra", "Euphrasia vigursii")] %>%
   
@@ -230,6 +239,8 @@ rnodes3[, .(mean = mean(Reproductive_nodes),
   ylab(label = "Mean reproductive nodes at end of season")+
   scale_colour_discrete(name = "Euphrasia species")
 
+ggsave(filename = "./Figures/Many_species/population_cum_nodes_vig_tet", plot = plot_3.2, 
+       device = "pdf", width = 10, height = 6, units = "in")
 
 ##### Part 4: Model two populations from the same location for differences #####
 
@@ -301,12 +312,16 @@ write.csv(
 
 ##### Plot 4: Two population model plot of posterior modes #####
 
-Solapply(manysp.3, HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_Euphrasia")] %>%
+plot_4.1 <- Solapply(manysp.3, HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_Euphrasia")] %>%
   ggplot(aes(x = reorder(Variable, `Posterior Mode`), y = `Posterior Mode`))+
   geom_point()+
   geom_errorbar(aes(ymin = lowerHPD, ymax = upperHPD))+
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  xlab(label = "Factor")
+
+ggsave(filename = "./Figures/Many_species/vig_tet_interation_plot", plot = plot_4.1, 
+       device = "pdf", width = 10, height = 6, units = "in")
 
 ##### Part 5: Differences in E.anglica and E. micrantha performance #####
 
@@ -446,3 +461,29 @@ write.csv(
     HOST_GIVEN_POPULATION = anova(manysp.5LR1, manysp.5LR3), keep.rownames = TRUE
   ), file = "./Data/Many_species/Model_outputs/Anglica/LRTs_of_models.csv"
 )
+
+##### Plot 5: E. anglica and E. micrantha interactions #####
+
+# Euphrasia micrantha
+plot_5.1 <- Solapply(manysp.4, HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_population")] %>%
+  ggplot(aes(x = reorder(Variable, `Posterior Mode`), y = `Posterior Mode`))+
+  geom_point()+
+  geom_errorbar(aes(ymin = lowerHPD, ymax = upperHPD))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  xlab(label = "Factor")
+
+ggsave(filename = "./Figures/Many_species/micrantha_interation", plot = plot_5.1, 
+       device = "pdf", width = 10, height = 6, units = "in")
+
+# Euphrasia anglica
+plot_5.2 <- Solapply(manysp.5, HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_population")] %>%
+  ggplot(aes(x = reorder(Variable, `Posterior Mode`), y = `Posterior Mode`))+
+  geom_point()+
+  geom_errorbar(aes(ymin = lowerHPD, ymax = upperHPD))+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  xlab(label = "Factor")
+
+ggsave(filename = "./Figures/Many_species/anglica_interation", plot = plot_5.2, 
+       device = "pdf", width = 10, height = 6, units = "in")
