@@ -190,6 +190,26 @@ plot_2.1 <- Solapply(manysp.2, coda::HPDinterval)[order(`Posterior Mode`)][Group
 ggsave(filename = "./Figures/Many_species/posterior_interaction_modes_mod_1", plot = plot_2.1, 
        device = "pdf", width = 21, height = 6, units = "in")
 
+m1 <- data.table(Density =(manysp.2$VCV[,c(1)])/rowSums(manysp.2$VCV),
+                 Trait = as.factor(rep("Host contribution", 1000)))
+m2 <- data.table(Density =(manysp.2$VCV[,c(2)])/rowSums(manysp.2$VCV),
+                 Trait = as.factor(rep("Host:Euphrasia", 1000)))
+m3 <- data.table(Density =(manysp.2$VCV[,c(3)])/rowSums(manysp.2$VCV),
+                 Trait = as.factor(rep("Host:Euphrasia population", 1000)))
+m4 <- data.table(Density =(manysp.2$VCV[,c(4)])/rowSums(manysp.2$VCV),
+                 Trait = as.factor(rep("Residual", 1000)))
+final <- rbind(m1,m2,m3,m4)
+final$Density <- as.numeric(final$Density)
+
+final$Trait <- factor(x = final$Trait, levels = rev(c("Host:Euphrasia",
+                                                  "Host:Euphrasia population",
+                                                  "Host contribution",
+                                                  "Residual")))
+
+ggplot(final, aes(x = Density, y = Trait))+
+  theme_bw()+geom_density_ridges()+geom_vline(xintercept = 0, col = "red", lty = 2, size = 1)+
+  scale_x_continuous(limits = c(-0.2,1))
+
 ##### Plot 3: Raw data for the manuscript, means and SE's #####
 
 plot_3.1<- rnodes3[, .(mean = mean(Reproductive_nodes),
