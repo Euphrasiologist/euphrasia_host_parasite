@@ -1,91 +1,61 @@
 "","Variable","Grouped_Value"
-"1","Host_given_population.A1763.LCO",0.294304955707763
-"2","Host_code.HPU",0.547155862642808
-"3","Host_given_population.M1769.LCO",0.566886256847363
-"4","Host_given_population.V1761.OVU",0.628274046509263
-"5","Host_code.CVU",0.639436092519317
-"6","Host_given_population.M1769.HLA",0.665766884530913
-"7","Host_code.OVU",0.669368815488174
-"8","Host_given_population.M1769.CVU",0.670661001377957
-"9","Host_given_population.A1766.VCH",0.675435465553274
-"10","Host_code.UGA",0.676593433728213
-"11","Host_given_population.A1766.UGA",0.698583971482376
-"12","Host_given_population.M1769.PMA",0.713629174536763
-"13","Host_given_population.A1763.FOV",0.718320216102086
-"14","Host_code.HLA",0.749821963116168
-"15","Host_given_population.M1768.DFL",0.756111995200075
-"16","Host_code.PMA",0.765084640808477
-"17","Host_given_population.V1761.HPU",0.765509712016685
-"18","Host_given_population.M1768.PLA",0.767689510159014
-"19","Host_given_population.T1761.PMA",0.784887313876125
-"20","Host_given_population.M1769.HPU",0.797928425731752
-"21","Host_given_population.M1767.FOV",0.798757320232725
-"22","Host_given_population.A1763.PMA",0.798977640798963
-"23","Host_given_population.M1769.ACU",0.80999008652719
-"24","Host_given_population.M1769.OVU",0.810623409874185
-"25","Host_given_population.M1767.VCH",0.82353486966595
-"26","Host_given_population.T1761.ACU",0.825442783458243
-"27","Host_given_population.V1761.HLA",0.836972538820691
-"28","Host_given_population.M1769.DFL",0.844561180196416
-"29","Host_given_population.M1767.LPE",0.846778389475622
-"30","Host_given_population.T1761.VCH",0.847213954925624
-"31","Host_given_population.M1768.LCO",0.848838629192641
-"32","Host_given_population.M1769.PLA",0.856552713719105
-"33","Host_given_population.T1761.OVU",0.861052510139058
-"34","Host_given_population.M1769.LPE",0.862854839898033
-"35","Host_given_population.T1761.DFL",0.869507366183502
-"36","Host_given_population.M1769.UGA",0.916942879489117
-"37","Host_given_population.M1767.OVU",0.944667035537344
-"38","Host_given_population.M1769.FOV",0.946288594539337
-"39","Host_given_population.A1766.OVU",0.95208055994779
-"40","Host_given_population.T1761.UGA",0.963539927493224
-"41","Host_given_population.V1761.LPE",0.968067300964755
-"42","Host_given_population.M1768.CVU",0.970834766853883
-"43","Host_code.DFL",0.975998441987209
-"44","Host_given_population.T1761.CVU",0.987941601932936
-"45","Host_given_population.A1766.ACU",0.988369544789723
-"46","Host_given_population.M1767.ACU",0.991301108632003
-"47","Host_given_population.A1763.UGA",0.991638968612857
-"48","Host_given_population.V1761.FOV",0.993105812338104
-"49","Host_given_population.M1767.HLA",0.99815915201762
-"50","Host_given_population.M1768.HPU",1.00839172715799
-"51","Host_given_population.T1761.FOV",1.01776074323554
-"52","Host_code.FOV",1.01945161061378
-"53","Host_code.ACU",1.0337808247585
-"54","Host_given_population.A1763.OVU",1.04369559367464
-"55","Host_given_population.M1769.VCH",1.04588092135548
-"56","Host_given_population.V1761.DFL",1.08306797335382
-"57","Host_given_population.A1766.FOV",1.09050252218045
-"58","Host_given_population.V1761.PMA",1.09381378847995
-"59","Host_given_population.V1761.VCH",1.10087728150823
-"60","Host_given_population.A1766.PLA",1.10188337899221
-"61","Host_given_population.M1768.HLA",1.11605470703325
-"62","Host_given_population.A1766.LCO",1.13319850467475
-"63","Host_given_population.A1763.ACU",1.13583466069095
-"64","Host_code.VCH",1.13888652585175
-"65","Host_given_population.A1766.PMA",1.15881070310673
-"66","Host_given_population.A1763.VCH",1.1699691134185
-"67","Host_code.PLA",1.1930829747366
-"68","Host_given_population.V1761.ACU",1.20828995471996
-"69","Host_given_population.A1763.DFL",1.22324138516767
-"70","Host_given_population.A1766.LPE",1.27300354155258
-"71","Host_given_population.T1761.HLA",1.2924048874831
-"72","Host_given_population.A1763.LPE",1.31585766356702
-"73","Host_given_population.T1761.LPE",1.31685981988032
-"74","Host_given_population.A1763.HLA",1.31859909831348
-"75","Host_given_population.M1768.OVU",1.33623434792055
-"76","Host_given_population.A1763.PLA",1.3369709371413
-"77","Host_given_population.V1761.UGA",1.34440471282294
-"78","Host_given_population.M1768.FOV",1.37251121675766
-"79","Host_given_population.T1761.PLA",1.39007342524373
-"80","Host_given_population.M1768.UGA",1.50690918417908
-"81","Host_given_population.M1768.VCH",1.53864102797395
-"82","Host_given_population.M1768.PMA",1.57431333986584
-"83","Host_given_population.M1767.LCO",1.58419874068646
-"84","Host_given_population.M1768.LPE",1.643850913192
-"85","Host_given_population.A1766.DFL",1.65479927611905
-"86","Host_given_population.M1768.ACU",1.69929076681025
-"87","Host_given_population.V1761.LCO",2.05976940277127
-"88","Host_code.LCO",2.13798954348707
-"89","Host_given_population.T1761.LCO",2.3484327712167
-"90","Host_code.LPE",2.76426118388661
+"1","Host_code.UGA",0.605252648861355
+"2","Host_code.OVU",0.608331443973201
+"3","Host_code.CVU",0.628912001291752
+"4","Host_given_Euphrasia.Euphrasia anglica.LCO",0.629494066653992
+"5","Host_code.HPU",0.682869742754415
+"6","Host_given_Euphrasia.Euphrasia micrantha.PLA",0.687650816796261
+"7","Host_given_Euphrasia.Euphrasia tetraquetra.PMA",0.695826802443324
+"8","Host_given_Euphrasia.Euphrasia anglica.UGA",0.731942715889858
+"9","Host_given_Euphrasia.Euphrasia tetraquetra.ACU",0.750191979590551
+"10","Host_given_Euphrasia.Euphrasia vigursii.OVU",0.763917934432996
+"11","Host_given_Euphrasia.Euphrasia tetraquetra.VCH",0.776119323105666
+"12","Host_given_Euphrasia.Euphrasia micrantha.DFL",0.805241170083393
+"13","Host_given_Euphrasia.Euphrasia micrantha.LCO",0.826581672495699
+"14","Host_given_Euphrasia.Euphrasia anglica.OVU",0.835690891212409
+"15","Host_code.HLA",0.845879118847505
+"16","Host_code.FOV",0.872855884657257
+"17","Host_given_Euphrasia.Euphrasia tetraquetra.FOV",0.876040259717403
+"18","Host_given_Euphrasia.Euphrasia micrantha.CVU",0.878355415214829
+"19","Host_given_Euphrasia.Euphrasia tetraquetra.OVU",0.89742859009251
+"20","Host_code.PMA",0.903221686163745
+"21","Host_given_Euphrasia.Euphrasia vigursii.HLA",0.906881149070164
+"22","Host_given_Euphrasia.Euphrasia tetraquetra.DFL",0.908116725177772
+"23","Host_given_Euphrasia.Euphrasia vigursii.LPE",0.917056983206153
+"24","Host_given_Euphrasia.Euphrasia anglica.ACU",0.917438565911524
+"25","Host_given_Euphrasia.Euphrasia micrantha.HLA",0.923162919002018
+"26","Host_given_Euphrasia.Euphrasia micrantha.UGA",0.935629640902224
+"27","Host_given_Euphrasia.Euphrasia tetraquetra.UGA",0.948685415007596
+"28","Host_given_Euphrasia.Euphrasia vigursii.ACU",0.959623665774609
+"29","Host_given_Euphrasia.Euphrasia anglica.VCH",0.96602206282608
+"30","Host_given_Euphrasia.Euphrasia tetraquetra.HLA",0.966421718555704
+"31","Host_given_Euphrasia.Euphrasia anglica.PMA",0.971297138630374
+"32","Host_given_Euphrasia.Euphrasia vigursii.FOV",0.976832727163248
+"33","Host_given_Euphrasia.Euphrasia vigursii.HPU",0.977611433045768
+"34","Host_given_Euphrasia.Euphrasia micrantha.HPU",0.981987436440566
+"35","Host_code.ACU",0.993509077583914
+"36","Host_code.DFL",1.04518998623599
+"37","Host_given_Euphrasia.Euphrasia tetraquetra.CVU",1.05177568940842
+"38","Host_given_Euphrasia.Euphrasia vigursii.UGA",1.06137995430206
+"39","Host_given_Euphrasia.Euphrasia micrantha.FOV",1.07504102815785
+"40","Host_code.PLA",1.08644648749143
+"41","Host_given_Euphrasia.Euphrasia anglica.FOV",1.09341150275516
+"42","Host_given_Euphrasia.Euphrasia vigursii.PMA",1.11315085839378
+"43","Host_given_Euphrasia.Euphrasia tetraquetra.LPE",1.12999219100786
+"44","Host_given_Euphrasia.Euphrasia vigursii.DFL",1.15479280102309
+"45","Host_given_Euphrasia.Euphrasia micrantha.PMA",1.15873019645685
+"46","Host_given_Euphrasia.Euphrasia anglica.PLA",1.1633204885618
+"47","Host_given_Euphrasia.Euphrasia micrantha.LPE",1.18769831561536
+"48","Host_given_Euphrasia.Euphrasia anglica.LPE",1.20116713473931
+"49","Host_given_Euphrasia.Euphrasia micrantha.OVU",1.25626579529791
+"50","Host_given_Euphrasia.Euphrasia vigursii.VCH",1.26335751745932
+"51","Host_given_Euphrasia.Euphrasia micrantha.ACU",1.33348223079352
+"52","Host_code.VCH",1.3382029153862
+"53","Host_given_Euphrasia.Euphrasia anglica.DFL",1.36555270307717
+"54","Host_given_Euphrasia.Euphrasia micrantha.VCH",1.37652819808161
+"55","Host_given_Euphrasia.Euphrasia anglica.HLA",1.41237449486802
+"56","Host_given_Euphrasia.Euphrasia tetraquetra.PLA",1.48409154949415
+"57","Host_given_Euphrasia.Euphrasia vigursii.LCO",1.58451453656679
+"58","Host_given_Euphrasia.Euphrasia tetraquetra.LCO",2.11223592000999
+"59","Host_code.LCO",2.78773825819351
+"60","Host_code.LPE",3.10509165118687

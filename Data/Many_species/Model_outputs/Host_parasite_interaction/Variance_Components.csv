@@ -1,4 +1,4 @@
-"","HOST.rn","HOST.%","HOST_GIVEN_EUPHRASIA.rn","HOST_GIVEN_EUPHRASIA.%","HOST_GIVEN_POPULATION.rn","HOST_GIVEN_POPULATION.%","UNITS.rn","UNITS.%"
-"1","Link Scale Point Estimate",18.514455943127,"Link Scale Point Estimate",0.0453482026727383,"Link Scale Point Estimate",14.5790403728374,"Link Scale Point Estimate",38.7333035435526
-"2","CI Link Scale Lower",5.06854724385075,"CI Link Scale Lower",7.17261212852325e-08,"CI Link Scale Lower",5.90975184477758,"CI Link Scale Lower",26.4699026640235
-"3","CI Link Scale Upper",45.1968101649074,"CI Link Scale Upper",8.47688001752689,"CI Link Scale Upper",29.2953278522265,"CI Link Scale Upper",52.2066934522296
+"","HOST.rn","HOST.%","HOST_GIVEN_EUPHRASIA.rn","HOST_GIVEN_EUPHRASIA.%","POPULATION.rn","POPULATION.%","UNITS.rn","UNITS.%"
+"1","Link Scale Point Estimate",20.6295613704658,"Link Scale Point Estimate",9.27467048385038,"Link Scale Point Estimate",5.76107175638824,"Link Scale Point Estimate",32.2886139371569
+"2","CI Link Scale Lower",2.22204405194365,"CI Link Scale Lower",0.653946511390394,"CI Link Scale Lower",1.46086509544711,"CI Link Scale Lower",10.9570552020758
+"3","CI Link Scale Upper",45.2980805587318,"CI Link Scale Upper",17.8795962288369,"CI Link Scale Upper",70.1280960593387,"CI Link Scale Upper",49.6136309302097
