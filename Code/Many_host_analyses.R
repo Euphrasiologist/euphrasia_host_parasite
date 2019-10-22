@@ -457,11 +457,14 @@ plot_1 <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")],
         axis.title.y = element_text(size = 20),
         legend.title = element_text(size = 20),
         strip.background = element_blank(),
-        strip.text.x = element_text(size = 20))
+        strip.text.x = element_text(size = 20),
+        legend.text = element_text(face = "italic"))
 
 
-ggsave(filename = "./Figures/Many_hosts/two_families_survival", plot = plot_1, 
+ggsave(filename = "./Figures/Many_hosts/two_families_survival.pdf", plot = plot_1, 
        device = "pdf", width = 6, height = 5, units = "in")
+ggsave(filename = "./Figures/Many_hosts/two_families_survival.jpeg", plot = plot_1, 
+       device = "jpeg", width = 6, height = 5, units = "in")
 
 plot_1_group <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")], 
                  aes(x=Time, y=y,group=Family))+
