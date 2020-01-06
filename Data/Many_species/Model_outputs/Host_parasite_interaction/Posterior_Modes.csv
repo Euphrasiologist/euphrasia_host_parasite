@@ -1,61 +1,61 @@
 "","Variable","Grouped_Value"
-"1","Host_code.UGA",0.605252648861355
-"2","Host_code.OVU",0.608331443973201
-"3","Host_code.CVU",0.628912001291752
-"4","Host_given_Euphrasia.Euphrasia anglica.LCO",0.629494066653992
-"5","Host_code.HPU",0.682869742754415
-"6","Host_given_Euphrasia.Euphrasia micrantha.PLA",0.687650816796261
-"7","Host_given_Euphrasia.Euphrasia tetraquetra.PMA",0.695826802443324
-"8","Host_given_Euphrasia.Euphrasia anglica.UGA",0.731942715889858
-"9","Host_given_Euphrasia.Euphrasia tetraquetra.ACU",0.750191979590551
-"10","Host_given_Euphrasia.Euphrasia vigursii.OVU",0.763917934432996
-"11","Host_given_Euphrasia.Euphrasia tetraquetra.VCH",0.776119323105666
-"12","Host_given_Euphrasia.Euphrasia micrantha.DFL",0.805241170083393
-"13","Host_given_Euphrasia.Euphrasia micrantha.LCO",0.826581672495699
-"14","Host_given_Euphrasia.Euphrasia anglica.OVU",0.835690891212409
-"15","Host_code.HLA",0.845879118847505
-"16","Host_code.FOV",0.872855884657257
-"17","Host_given_Euphrasia.Euphrasia tetraquetra.FOV",0.876040259717403
-"18","Host_given_Euphrasia.Euphrasia micrantha.CVU",0.878355415214829
-"19","Host_given_Euphrasia.Euphrasia tetraquetra.OVU",0.89742859009251
-"20","Host_code.PMA",0.903221686163745
-"21","Host_given_Euphrasia.Euphrasia vigursii.HLA",0.906881149070164
-"22","Host_given_Euphrasia.Euphrasia tetraquetra.DFL",0.908116725177772
-"23","Host_given_Euphrasia.Euphrasia vigursii.LPE",0.917056983206153
-"24","Host_given_Euphrasia.Euphrasia anglica.ACU",0.917438565911524
-"25","Host_given_Euphrasia.Euphrasia micrantha.HLA",0.923162919002018
-"26","Host_given_Euphrasia.Euphrasia micrantha.UGA",0.935629640902224
-"27","Host_given_Euphrasia.Euphrasia tetraquetra.UGA",0.948685415007596
-"28","Host_given_Euphrasia.Euphrasia vigursii.ACU",0.959623665774609
-"29","Host_given_Euphrasia.Euphrasia anglica.VCH",0.96602206282608
-"30","Host_given_Euphrasia.Euphrasia tetraquetra.HLA",0.966421718555704
-"31","Host_given_Euphrasia.Euphrasia anglica.PMA",0.971297138630374
-"32","Host_given_Euphrasia.Euphrasia vigursii.FOV",0.976832727163248
-"33","Host_given_Euphrasia.Euphrasia vigursii.HPU",0.977611433045768
-"34","Host_given_Euphrasia.Euphrasia micrantha.HPU",0.981987436440566
-"35","Host_code.ACU",0.993509077583914
-"36","Host_code.DFL",1.04518998623599
-"37","Host_given_Euphrasia.Euphrasia tetraquetra.CVU",1.05177568940842
-"38","Host_given_Euphrasia.Euphrasia vigursii.UGA",1.06137995430206
-"39","Host_given_Euphrasia.Euphrasia micrantha.FOV",1.07504102815785
-"40","Host_code.PLA",1.08644648749143
-"41","Host_given_Euphrasia.Euphrasia anglica.FOV",1.09341150275516
-"42","Host_given_Euphrasia.Euphrasia vigursii.PMA",1.11315085839378
-"43","Host_given_Euphrasia.Euphrasia tetraquetra.LPE",1.12999219100786
-"44","Host_given_Euphrasia.Euphrasia vigursii.DFL",1.15479280102309
-"45","Host_given_Euphrasia.Euphrasia micrantha.PMA",1.15873019645685
-"46","Host_given_Euphrasia.Euphrasia anglica.PLA",1.1633204885618
-"47","Host_given_Euphrasia.Euphrasia micrantha.LPE",1.18769831561536
-"48","Host_given_Euphrasia.Euphrasia anglica.LPE",1.20116713473931
-"49","Host_given_Euphrasia.Euphrasia micrantha.OVU",1.25626579529791
-"50","Host_given_Euphrasia.Euphrasia vigursii.VCH",1.26335751745932
-"51","Host_given_Euphrasia.Euphrasia micrantha.ACU",1.33348223079352
-"52","Host_code.VCH",1.3382029153862
-"53","Host_given_Euphrasia.Euphrasia anglica.DFL",1.36555270307717
-"54","Host_given_Euphrasia.Euphrasia micrantha.VCH",1.37652819808161
-"55","Host_given_Euphrasia.Euphrasia anglica.HLA",1.41237449486802
-"56","Host_given_Euphrasia.Euphrasia tetraquetra.PLA",1.48409154949415
-"57","Host_given_Euphrasia.Euphrasia vigursii.LCO",1.58451453656679
-"58","Host_given_Euphrasia.Euphrasia tetraquetra.LCO",2.11223592000999
-"59","Host_code.LCO",2.78773825819351
-"60","Host_code.LPE",3.10509165118687
+"1","Host_code.HPU","0.4227"
+"2","Host_given_Euphrasia.Euphrasia anglica.LCO","0.4937"
+"3","Host_code.OVU","0.6373"
+"4","Host_code.UGA","0.6733"
+"5","Host_given_Euphrasia.Euphrasia micrantha.DFL","0.6738"
+"6","Host_code.PMA","0.6990"
+"7","Host_code.CVU","0.7169"
+"8","Host_given_Euphrasia.Euphrasia micrantha.PLA","0.7474"
+"9","Host_given_Euphrasia.Euphrasia tetraquetra.ACU","0.7544"
+"10","Host_given_Euphrasia.Euphrasia anglica.UGA","0.7959"
+"11","Host_given_Euphrasia.Euphrasia micrantha.HPU","0.8073"
+"12","Host_given_Euphrasia.Euphrasia anglica.OVU","0.8482"
+"13","Host_given_Euphrasia.Euphrasia micrantha.CVU","0.8508"
+"14","Host_given_Euphrasia.Euphrasia tetraquetra.VCH","0.8579"
+"15","Host_given_Euphrasia.Euphrasia tetraquetra.PMA","0.8607"
+"16","Host_given_Euphrasia.Euphrasia vigursii.LPE","0.8862"
+"17","Host_given_Euphrasia.Euphrasia tetraquetra.CVU","0.8932"
+"18","Host_given_Euphrasia.Euphrasia micrantha.LCO","0.8937"
+"19","Host_given_Euphrasia.Euphrasia vigursii.DFL","0.8959"
+"20","Host_given_Euphrasia.Euphrasia vigursii.OVU","0.9151"
+"21","Host_given_Euphrasia.Euphrasia vigursii.HLA","0.9209"
+"22","Host_given_Euphrasia.Euphrasia vigursii.FOV","0.9275"
+"23","Host_given_Euphrasia.Euphrasia tetraquetra.FOV","0.9281"
+"24","Host_given_Euphrasia.Euphrasia anglica.VCH","0.9287"
+"25","Host_given_Euphrasia.Euphrasia anglica.ACU","0.9393"
+"26","Host_code.HLA","0.9490"
+"27","Host_given_Euphrasia.Euphrasia micrantha.PMA","0.9531"
+"28","Host_given_Euphrasia.Euphrasia micrantha.HLA","0.9657"
+"29","Host_given_Euphrasia.Euphrasia tetraquetra.UGA","0.9768"
+"30","Host_given_Euphrasia.Euphrasia tetraquetra.HLA","0.9897"
+"31","Host_given_Euphrasia.Euphrasia micrantha.UGA","0.9972"
+"32","Host_given_Euphrasia.Euphrasia tetraquetra.OVU","1.0014"
+"33","Host_code.FOV","1.0234"
+"34","Host_given_Euphrasia.Euphrasia anglica.PMA","1.0301"
+"35","Host_code.ACU","1.0327"
+"36","Host_given_Euphrasia.Euphrasia anglica.PLA","1.0351"
+"37","Host_given_Euphrasia.Euphrasia tetraquetra.DFL","1.0672"
+"38","Host_code.DFL","1.0773"
+"39","Host_given_Euphrasia.Euphrasia anglica.FOV","1.1124"
+"40","Host_given_Euphrasia.Euphrasia vigursii.VCH","1.1145"
+"41","Host_code.PLA","1.1183"
+"42","Host_given_Euphrasia.Euphrasia vigursii.HPU","1.1429"
+"43","Host_given_Euphrasia.Euphrasia vigursii.UGA","1.1513"
+"44","Host_given_Euphrasia.Euphrasia vigursii.PMA","1.1534"
+"45","Host_given_Euphrasia.Euphrasia vigursii.ACU","1.1607"
+"46","Host_given_Euphrasia.Euphrasia micrantha.VCH","1.2041"
+"47","Host_given_Euphrasia.Euphrasia anglica.LPE","1.2063"
+"48","Host_code.VCH","1.2081"
+"49","Host_given_Euphrasia.Euphrasia tetraquetra.PLA","1.2474"
+"50","Host_given_Euphrasia.Euphrasia micrantha.OVU","1.2735"
+"51","Host_given_Euphrasia.Euphrasia micrantha.FOV","1.2812"
+"52","Host_given_Euphrasia.Euphrasia tetraquetra.LPE","1.3106"
+"53","Host_given_Euphrasia.Euphrasia micrantha.LPE","1.4093"
+"54","Host_given_Euphrasia.Euphrasia anglica.HLA","1.4316"
+"55","Host_given_Euphrasia.Euphrasia micrantha.ACU","1.4778"
+"56","Host_given_Euphrasia.Euphrasia anglica.DFL","1.4867"
+"57","Host_given_Euphrasia.Euphrasia vigursii.LCO","1.7587"
+"58","Host_given_Euphrasia.Euphrasia tetraquetra.LCO","2.3354"
+"59","Host_code.LCO","2.6228"
+"60","Host_code.LPE","2.8908"

@@ -11,39 +11,6 @@ library(lme4)
 library(VCVglmm)
 library(dplyr)
 
-# VCVglmm function not exporting properly... so rewrite here
-Solapply <- function (model, FUN = posterior_mode, ...) {
-  if (attributes(model)$class != "MCMCglmm") {
-    stop("Object not of class MCMCglmm")
-  }
-  if (dim(model$Sol)[2] <= model$Fixed$nfl) {
-    stop("Re-run the model with parameter option pr = TRUE")
-  }
-  posterior_mode <- function(x, adjust = 0.1, ...) {
-    find.mode <- function(x, adjust, ...) {
-      dx <- density(x, adjust = adjust, ...)
-      dx$x[which.max(dx$y)]
-    }
-    apply(as.matrix(x), 2, find.mode, adjust = adjust, ...)
-  }
-  FUN <- match.fun(FUN)
-  if (identical(FUN, HPDinterval)) {
-    temp <- setDT(as.data.frame(HPDinterval(model$Sol)), 
-                  keep.rownames = TRUE)[-c(1:model$Fixed$nfl)]
-    temp$posterior.mode <- as.data.frame(apply(model$Sol[, 
-                                                         -c(1:model$Fixed$nfl)], 2, posterior_mode))[, 1]
-    colnames(temp) <- c("Variable", "lowerHPD", "upperHPD", 
-                        "Posterior Mode")
-    temp$Group <- gsub("\\..*", "", temp$Variable)
-    return(temp)
-  }
-  temp <- setDT(as.data.frame(apply(model$Sol[, -c(1:model$Fixed$nfl)], 
-                                    2, FUN)), keep.rownames = TRUE)
-  colnames(temp) <- c("Variable", "Grouped_Value")
-  temp$Group <- gsub("\\..*", "", temp$Variable)
-  return(temp)
-}
-
 # "not" in
 `%!in%` <- function(x,y)!('%in%'(x,y))
 
@@ -53,9 +20,6 @@ ablines <- function(intercept, slope, x1, x2){
   res <- exp(intercept + slope*x)
   res
 }
-
-# euphrasia anglica is actually only from one population...
-# so maybe sink 
 
 
 ##### Part 1: Data tidying #####
@@ -150,9 +114,9 @@ manysp.2<-MCMCglmm(Reproductive_nodes ~ Euphrasia_sp2 + Population,
                    family = "poisson",
                    prior=prior.manysp,
                    data = rnodes3,
-                   nitt = 13000*8,
-                   burnin = 3000*8,
-                   thin = 10*8,
+                   nitt = 13000*10,
+                   burnin = 3000*10,
+                   thin = 10*10,
                    pr=TRUE,
                    verbose = TRUE)
 summary(manysp.2)
@@ -184,8 +148,11 @@ VCVdensity(manysp.2)+xlim(0, 1)
 
 # so there are interactions here, let's dig further
 # so this is great, we have the posterior modes for population:host interactions and host
-write.csv(x = Solapply(manysp.2)[order(Grouped_Value)][Group %in% c("Host_code", "Host_given_Euphrasia")][, .(Variable = Variable,
-                                                                                                               Grouped_Value = exp(Grouped_Value))],
+
+sol_int <- Solapply(manysp.2)[order(Grouped_Value)][Group %in% c("Host_code", "Host_given_Euphrasia")][, .(Variable = Variable, Grouped_Value = exp(Grouped_Value))]
+
+sol_int[, Grouped_Value := specify_decimal(Grouped_Value, 4)]
+write.csv(x = sol_int,
           file = "./Data/Many_species/Model_outputs/Host_parasite_interaction/Posterior_Modes.csv")
 # significance of random effects
 # need to add Obs

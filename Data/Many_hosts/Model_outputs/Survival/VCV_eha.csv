@@ -1,0 +1,4 @@
+"","Response","Variable","Posterior Mode","lowerHPD","upperHPD"
+"1","Survival","Name",0.192301103266395,0.0878667406314282,0.358591553720602
+"2","Survival","animal",0.0071482575068405,2.21990448162635e-06,1.08789063272079
+"3","Survival","units",0.999867278016339,1,1

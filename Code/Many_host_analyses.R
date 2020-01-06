@@ -29,7 +29,37 @@ logit2prob <- function(logit){
 probit2prob <- function(probit){
   pnorm(probit)
 }
-
+# development version VCVapply, may want to merge functionality with Solapply
+VCVapply <- function(model, FUN = coda::HPDinterval){
+  if (attributes(model)$class != "MCMCglmm") {
+    stop("Object not of class MCMCglmm")
+  }
+  if (dim(model$Sol)[2] <= model$Fixed$nfl) {
+    stop("Re-run the model with parameter option pr = TRUE")
+  }
+  posterior_mode <- function(x, adjust = 0.1, ...) {
+    find.mode <- function(x, adjust, ...) {
+      dx <- density(x, adjust = adjust, ...)
+      dx$x[which.max(dx$y)]
+    }
+    apply(as.matrix(x), 2, find.mode, adjust = adjust, ...)
+  }
+  
+  fun <- match.fun(FUN)
+  
+  if (identical(fun, HPDinterval)) {
+    temp <- setDT(as.data.frame(HPDinterval(model$VCV)), 
+                  keep.rownames = TRUE)
+    temp$posterior.mode <- as.data.frame(apply(model$VCV, 2, posterior_mode))[, 1]
+    colnames(temp) <- c("Variable", "lowerHPD", "upperHPD", 
+                        "Posterior Mode")
+    temp <- temp[, .(Variable,`Posterior Mode`, lowerHPD, upperHPD)]
+    return(temp)
+  }
+  temp <- setDT(as.data.frame(apply(model$VCV, 2, fun)), keep.rownames = TRUE)
+  colnames(temp) <- c("Variable", name <- paste(deparse(substitute(FUN))))
+  return(temp)
+}
 
 # notes 
 
@@ -96,7 +126,7 @@ constraint.2$edge.length[1] <- 1e-10
 # create the object for MCMCglmm model 
 AinvULT2 <- ultm(constraint.2, MPL = FALSE, inverseA = TRUE)
 
-##### Part 3: Models at first flowering #####
+##### Part 3: Model at first flowering #####
 
 # load data
 floweringsofar<- fread("./Data/Many_hosts/FloweringsofarV2.csv")
@@ -142,9 +172,10 @@ floweringsofar2$Transplant.Date <- floweringsofar2$Transplant.Date
 
 # fold difference across all Euphrasia plants in days to flower
 max(floweringsofar2$Days_since_germination, na.rm = TRUE)/min(floweringsofar2$Days_since_germination, na.rm = TRUE)
-# 
-floweringsofar2[, .(mean = mean(Days_since_germination, na.rm = TRUE),
-                    sem = paste("±", sd(Days_since_germination, na.rm = TRUE)/sqrt(.N))), by = .(Host_Species)][order(-mean)]
+# days to flower means and errors
+flmeans <- floweringsofar2[, .(mean = as.numeric(specify_decimal(mean(Days_since_germination, na.rm = TRUE), 4)),
+                    sem = specify_decimal(sd(Days_since_germination, na.rm = TRUE)/sqrt(.N), 4)), by = .(Host_Species)][order(-mean)]
+write.csv(x = flmeans, file = "./Data/Many_hosts/Model_outputs/Days_to_flower/means_sds_days.csv")
 
 mcmcfix2<- MCMCglmm(Days_since_germination ~ AnnPer + Functional_group + Transplant.Date, 
                     random = ~ Host_Species + animal, 
@@ -188,6 +219,9 @@ write.csv(list(posterior.mode(as.mcmc((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV
                HPDinterval(as.mcmc((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV[,c(1,2)])))),
           file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Days_to_flower/Phylogeny_Variance.csv")
 
+# variance components
+write.csv(x = daysvcv <- cbind(Response = "Days to flower",VCVapply(mcmcfix2)),
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/VCV_days.csv")
 
 
 ##### Part 4: Survival analysis (Event History Analysis) ######
@@ -302,6 +336,11 @@ MCMCfixplot(eha.1)
 # Visualise the variances
 VCVdensity(eha.1)
 
+# save the variance components
+
+write.csv(x = ehavcv <- cbind(Response = "Survival",VCVapply(eha.1)),
+          file = "./Data/Many_hosts/Model_outputs/Survival/VCV_eha.csv")
+
 ##### Part 5: End of season reproductive nodes #####
 
 allgrowth<- read.csv("/Users/mbrown/OneDrive - University of Edinburgh/Euphrasia Experiment 1 HOSTS/GROWTH EXPT DATA/Allgrowthmeasurements1.csv", na.strings = "-")
@@ -357,6 +396,10 @@ mcmc.fix3.plot <- function(){
 }
 mcmc.fix3.plot()
 
+# save the solutions
+write.csv(x = specify_decimal(summary(mcmcfix3)$solutions, 4),
+          file = "./Data/Many_hosts/Model_outputs/Reproductive_nodes_end/Reprod_solutions.csv")
+
 # AnnPer
 write.csv(x = aod::wald.test(cov(mcmcfix3$Sol[,2, drop=F]), colMeans(mcmcfix3$Sol[,2, drop=F]), Terms=1)$result$chi2,
           file = "./Data/Many_hosts/Model_outputs/Reproductive_nodes_end/AnnPer_Wald_Test.csv")
@@ -377,6 +420,15 @@ write.csv(list(posterior.mode(mcmcfix3$VCV[,c(2)]/rowSums(cbind(mcmcfix3$VCV[,c(
                HPDinterval(mcmcfix3$VCV[,c(2)]/rowSums(cbind(mcmcfix3$VCV[,c(2)], 
                                                              mcmcfix3$VCV[,c(1)]))) ),
           file = "./Data/Many_hosts/Model_outputs/Reproductive_nodes_end/Phylogenetic_Variance.csv")
+
+# variance components
+write.csv(x = nodesvcv <- cbind(Response = "End of season reproduction", VCVapply(mcmcfix3)),
+          file = "./Data/Many_hosts/Model_outputs/Reproductive_nodes_end/VCV_nodes.csv")
+
+varcomps <- rbind(daysvcv, ehavcv, nodesvcv)[Variable %in% c("Host_Species", "Name"), Variable := "Host Species"][Variable == "animal", Variable := "Phylogeny"]
+
+write.csv(x = varcomps, file = "./Data/Many_hosts/Model_outputs/varcomps.csv")
+
 
 ##### Part 6: Reproductive nodes over time #####
 
@@ -406,6 +458,7 @@ allgrowth7 <- allgrowth3[,.(Unique_ID = as.integer(Unique_ID), Transplant.Date)]
 allgrowth7[, .(mean = mean(Nodes),
                sem = sd(Nodes)/sqrt(.N)), by = .(AnnPer, Name, Time)][Time == 4][order(mean)]
 # mean and sem for each host at each time point
+# May == 1, June == 2, July == 3, August == 4, September == 5
 allgrowth7[, .(MeanT = mean(Nodes), SEMT = paste("±", sd(Nodes)/sqrt(.N))), by = .(Name, Time)][
   Name %in% c("Lotus corniculatus", "Trifolium pratense", "Cynosurus cristatus")
 ][order(Name)]
@@ -428,17 +481,17 @@ mcmcfix4<-MCMCglmm(Nodes~Time*AnnPer+Functional_group + Transplant.Date,
                    pr=TRUE)
 summary(mcmcfix4)
 # summary output
-write.csv(x = summary(mcmcfix4)$solutions, 
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Reproduction_over_time/OT_Solutions.csv")
+write.csv(x = specify_decimal(summary(mcmcfix4)$solutions, 4),
+          file = "./Data/Many_hosts/Model_outputs/Reproduction_over_time/OT_Solutions.csv")
 # functional group
 write.csv(x = aod::wald.test(cov(mcmcfix4$Sol[,5:8, drop=F]), colMeans(mcmcfix4$Sol[,5:8, drop=F]), Terms=1:4)$result$chi2,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Reproduction_over_time/Functional_Group_Wald_Test.csv")
+          file = "./Data/Many_hosts/Model_outputs/Reproduction_over_time/Functional_Group_Wald_Test.csv")
 # life history host: time point
 write.csv(x = aod::wald.test(cov(mcmcfix4$Sol[,9:10, drop=F]), colMeans(mcmcfix4$Sol[,9:10, drop=F]), Terms=1:2)$result$chi2,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Reproduction_over_time/AnnPerInt_Wald_Test.csv")
+          file = "./Data/Many_hosts/Model_outputs/Reproduction_over_time/AnnPerInt_Wald_Test.csv")
 # life history of host
 write.csv(x = aod::wald.test(cov(mcmcfix4$Sol[,4, drop=F]), colMeans(mcmcfix4$Sol[,4, drop=F]), Terms=1)$result$chi2,
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Reproduction_over_time/AnnPer_Wald_Test.csv")
+          file = "./Data/Many_hosts/Model_outputs/Reproduction_over_time/AnnPer_Wald_Test.csv")
 
 # expected number of nodes at time point 1 on perennial 
 
@@ -482,7 +535,7 @@ plot_1 <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")],
               se = FALSE, size = 1)+
   ylim(c(0,1))+
   theme_bw()+
-  ylab(label = "Probability of death")+
+  ylab(label = "Probability of survival")+
   labs(colour = "Species")+
   theme(axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20),
@@ -507,7 +560,7 @@ plot_1_group <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")],
               se = TRUE, size = 1)+
   ylim(c(0,1))+
   theme_bw()+
-  ylab(label = "Probability of death")+
+  ylab(label = "Probability of survival")+
   labs(colour = "Species")+
   theme(axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20),
@@ -615,8 +668,10 @@ plot_4 <- overtime %>%
         axis.title.y = element_text(size = 20),
         legend.title = element_text(size = 20))
 
-ggsave(filename = "./Figures/Many_hosts/average_host", plot = plot_4, 
-       device = "pdf", width = 12.5, height = 7.5, units = "in")
+ggsave(filename = "./Figures/Many_hosts/average_host.pdf", plot = plot_4, 
+       device = "pdf", width = 13.5, height = 7.5, units = "in")
+ggsave(filename = "./Figures/Many_hosts/average_host.jpeg", plot = plot_4, 
+       device = "jpeg", width = 13.5, height = 7.5, units = "in")
 
 ##### Plot 5: Show the phylogenetic signal posterior distributions #####
 
@@ -638,61 +693,6 @@ ggsave(filename = "./Figures/Many_hosts/average_host", plot = plot_4,
     theme_bw()+geom_density_ridges()+geom_vline(xintercept = 0, col = "red", lty = 2, size = 1)+
     scale_x_continuous(limits = c(-0.2,1))
 
-ggsave(filename = "./Figures/Many_hosts/joint_variance_explained", plot = plot_5, 
+ggsave(filename = "./Figures/Many_hosts/joint_variance_explained.pdf", plot = plot_5, 
        device = "pdf", width = 6, height = 5, units = "in")
 
-##### DUSTBIN #####
-
-## COROLLA LENGTH ##
-prior.1 <- list(R=list(V=diag(1), nu=0.002), 
-                G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
-                       G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
-
-# fixed effects estimates for both annual/perennial and functional group
-mcmcfix1 <- MCMCglmm(Corolla_Length ~ AnnPer + Functional_group, 
-                     random = ~ Host_Species + animal, 
-                     ginverse = list(animal = AinvULT),
-                     data = floweringsofar,
-                     prior = prior.1,
-                     family= "gaussian",
-                     nitt = 13000*10,
-                     burnin = 3000*10,
-                     thin = 10*10,
-                     pr=TRUE,
-                     verbose = TRUE)
-
-
-# summary output
-summary(mcmcfix1)
-
-write.csv(x = specify_decimal(summary(mcmcfix1)$solutions, 4),
-          file = "./Data/Many_hosts/Model_outputs/Corolla_length/Corolla_solutions.csv")
-
-# joint phylogenetic distribution
-# 66.5%
-write.csv(
-  list(posterior.mode(as.mcmc(rowSums(mcmcfix1$VCV[,c(1,2)])/rowSums(mcmcfix1$VCV))),
-       # 18.5% - 80.4%
-       HPDinterval(as.mcmc(rowSums(mcmcfix1$VCV[,c(1,2)])/rowSums(mcmcfix1$VCV)))), 
-  file = "./Data/Many_hosts/Model_outputs/Corolla_length/Joint_Phylogeny_Variance.csv")
-
-# and the phylogenetic component
-# 60.2%
-write.csv(
-  list(posterior.mode(as.mcmc((mcmcfix1$VCV[,c(2)])/rowSums(mcmcfix1$VCV))),
-       # 9.41% - 80.6%
-       HPDinterval(as.mcmc((mcmcfix1$VCV[,c(2)])/rowSums(mcmcfix1$VCV)))), 
-  file = "./Data/Many_hosts/Model_outputs/Corolla_length/Phylogeny_Variance.csv")
-
-
-# host variance (v. low)
-posterior.mode(as.mcmc((mcmcfix1$VCV[,c(1)])/rowSums(mcmcfix1$VCV)))
-HPDinterval(as.mcmc((mcmcfix1$VCV[,c(1)])/rowSums(mcmcfix1$VCV)))
-
-
-# wald test of annual/perennial
-write.csv(x = aod::wald.test(cov(mcmcfix1$Sol[,2, drop=F]), colMeans(mcmcfix1$Sol[,2, drop=F]), Terms=1)$result, 
-          file = "./Data/Many_hosts/Model_outputs/Corolla_length/AnnPer_Wald_Test.csv")
-# wald test of functional group
-write.csv(x = aod::wald.test(cov(mcmcfix1$Sol[,3:6, drop=F]), colMeans(mcmcfix1$Sol[,3:6, drop=F]), Terms=1:4)$result, 
-          file = "./Data/Many_hosts/Model_outputs/Corolla_length/Functional_Group_Wald_Test.csv")
