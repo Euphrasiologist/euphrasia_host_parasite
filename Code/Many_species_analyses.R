@@ -128,23 +128,25 @@ rnodes2$Euphrasia_sp2 <- factor(rnodes2$Euphrasia_sp2)
 # prior for interaction model.
 prior.manysp <- list(R=list(V=diag(1), nu=0.002), 
                      G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
-                            G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
+                            #G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
                             G3=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
 
 # create the interaction factors
 # between species of Euphrasia and host
 rnodes2$Host_given_Euphrasia <- interaction(rnodes2$Euphrasia_sp2, rnodes2$Host_code)
-# and between population of Euphrasia and host
-rnodes2$Host_given_population <- NULL
 
 # remove any NA's
 rnodes3 <- rnodes2[complete.cases(Euphrasia_sp2)]
+# clean up population for no umambiguity
+rnodes3 <- rnodes3[, Population := Population2][, -"Population2"]
+# change to factors
+for_factor <- c("Euphrasia_sp2", "Host_code", "Population", "Host_given_Euphrasia")
+for(col in for_factor){
+  set(rnodes3, j=col, value=as.factor(rnodes3[[col]]))
+}
 
-# subset only the micrantha population I used -> M1767
-# non significant, but positive effect of host co-occurrence (increases above intercept by ~3 nodes.)
-
-manysp.2<-MCMCglmm(Reproductive_nodes ~ Euphrasia_sp2,
-                   random = ~ Host_code + Population + Host_given_Euphrasia,
+manysp.2<-MCMCglmm(Reproductive_nodes ~ Euphrasia_sp2 + Population,
+                   random = ~ Host_code + Host_given_Euphrasia,
                    family = "poisson",
                    prior=prior.manysp,
                    data = rnodes3,
@@ -162,13 +164,18 @@ HPDinterval(manysp.2$VCV[,"Host_code"]/(manysp.2$VCV[,"Host_code"]+manysp.2$VCV[
 posterior.mode(manysp.2$VCV[,"Host_given_Euphrasia"]/(manysp.2$VCV[,"Host_code"]+manysp.2$VCV[,"Host_given_Euphrasia"]))
 HPDinterval(manysp.2$VCV[,"Host_given_Euphrasia"]/(manysp.2$VCV[,"Host_code"]+manysp.2$VCV[,"Host_given_Euphrasia"]))
 
+# wald tests of significance
+# Euphrasia species & population?
+write.csv(x = aod::wald.test(cov(manysp.2$Sol[,2:6, drop=F]), colMeans(manysp.2$Sol[,2:6, drop=F]), Terms=1:5)$result$chi2,
+          file = "./Data/Many_species/Model_outputs/Host_parasite_interaction/Euphrasia_pop_sig.csv")
+
 
 write.csv(x = summary(manysp.2)$solutions,
           file = "./Data/Many_species/Model_outputs/Host_parasite_interaction/Model_solutions.csv")
 
 write.csv(x = data.table(HOST = MCMCReppois(mod = manysp.2, y = "Host_code"),
                          HOST_GIVEN_EUPHRASIA = MCMCReppois(mod = manysp.2, y = "Host_given_Euphrasia"),
-                         POPULATION = MCMCReppois(mod = manysp.2, y = "Population"),
+                         #POPULATION = MCMCReppois(mod = manysp.2, y = "Population"),
                          UNITS = MCMCReppois(mod = manysp.2, y = "units"), keep.rownames = TRUE),
           file = "./Data/Many_species/Model_outputs/Host_parasite_interaction/Variance_Components.csv")
 
@@ -182,20 +189,20 @@ write.csv(x = Solapply(manysp.2)[order(Grouped_Value)][Group %in% c("Host_code",
           file = "./Data/Many_species/Model_outputs/Host_parasite_interaction/Posterior_Modes.csv")
 # significance of random effects
 # need to add Obs
-rnodes3$Obs <- as.factor(1:nrow(rnodes3)) # maybe do not add...
+rnodes3$Obs <- as.factor(1:nrow(rnodes3)) 
 
 # full model
-manysp.2LR1 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + (1 | Host_code) + (1 | Host_given_Euphrasia) + (1 | Population) + (1|Obs),
+manysp.2LR1 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + Population +  (1 | Host_code) + (1 | Host_given_Euphrasia) + (1|Obs),
                      family = "poisson", data = rnodes3)
 # is Host_code significant?
-manysp.2LR2 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + (1 | Host_given_Euphrasia) + (1 | Population) + (1 | Obs),
+manysp.2LR2 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + Population + (1 | Host_given_Euphrasia) + (1 | Obs),
                      family = "poisson", data = rnodes3)
 # is Host_given_Euphrasia significant?
-manysp.2LR3 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + (1 | Host_code) + (1 | Population) + (1 | Obs),
+manysp.2LR3 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + Population + (1 | Host_code) + (1 | Obs),
                      family = "poisson", data = rnodes3)
 # is Population significant?
-manysp.2LR4 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + (1 | Host_code) +  (1 | Host_given_Euphrasia) + (1 | Obs),
-                     family = "poisson", data = rnodes3)
+#manysp.2LR4 <- glmer(Reproductive_nodes ~ Euphrasia_sp2 + Population + (1 | Host_code) +  (1 | Host_given_Euphrasia) + (1 | Obs),
+ #                    family = "poisson", data = rnodes3)
 
 write.csv(
   x = data.table(
@@ -204,7 +211,8 @@ write.csv(
     # Host_given_code_Euphrasia is significant
     HOST_GIVEN_EUPHRASIA = anova(manysp.2LR1, manysp.2LR3),
     # Population is highly significant
-    HOST_GIVEN_POPULATION = anova(manysp.2LR1, manysp.2LR4), keep.rownames = TRUE
+    #HOST_GIVEN_POPULATION = anova(manysp.2LR1, manysp.2LR4), 
+    keep.rownames = TRUE
   ), file = "./Data/Many_species/Model_outputs/Host_parasite_interaction/LRTs_of_models.csv"
 )
 
@@ -259,12 +267,12 @@ ggsave(filename = "./Figures/Many_species/posterior_interaction_dist", plot = pl
 
 plot_3.1<- rnodes3[, .(mean = mean(Reproductive_nodes, na.rm = TRUE),
             sem = sd(Reproductive_nodes, na.rm = TRUE)/sqrt(.N),
-            N = .N), by = c("Euphrasia_sp2", "Host_code","Population2")] %>% #[Population != "M1767"]
+            N = .N), by = c("Euphrasia_sp2", "Host_code","Population")] %>% #[Population != "M1767"]
   
   ggplot(aes(x = reorder(Host_code, mean) , y = mean))+
   geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem, group=Euphrasia_sp2), position = position_dodge(width = 0.9), width=0.4)+
   geom_point(aes(colour = Euphrasia_sp2), position = position_dodge(width = 0.9), size=3)+
-  facet_wrap(~Population2, scales = "free_y")+
+  facet_wrap(~Population, scales = "free_y")+
   theme_bw()+ theme(strip.text.x = element_text(size=20),
                     strip.background = element_rect(colour="white", fill="white"),
                     axis.line.x = element_line(colour = "black"),
@@ -273,13 +281,17 @@ plot_3.1<- rnodes3[, .(mean = mean(Reproductive_nodes, na.rm = TRUE),
                     axis.text.x = element_text(angle = 60, hjust = 1),
                     axis.title.x.bottom = element_text(size = 20),
                     axis.title.y.left = element_text(size = 20),
-                    legend.title = element_text(size = 20))+
+                    legend.title = element_text(size = 20),
+                    legend.text = element_text(face = "italic"))+
   xlab(label = "Host Species")+
   ylab(label = "Mean reproductive nodes at end of season")+
   scale_colour_discrete(name = "Euphrasia species")
 
-ggsave(filename = "./Figures/Many_species/population_cum_nodes", plot = plot_3.1, 
-       device = "png", width = 10, height = 6, units = "in")
+ggsave(filename = "./Figures/Many_species/population_cum_nodes.pdf", plot = plot_3.1, 
+       device = "pdf", width = 10, height = 6, units = "in")
+ggsave(filename = "./Figures/Many_species/population_cum_nodes.jpeg", plot = plot_3.1, 
+       device = "jpeg", width = 10, height = 6, units = "in")
+
 
 # just Euphrasia vigursii and tetraquetra, ready for model comparison
 

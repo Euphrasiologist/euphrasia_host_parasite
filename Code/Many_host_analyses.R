@@ -44,6 +44,7 @@ probit2prob <- function(probit){
 
 # The phylogeny is constrained using the APG4 reference tree and contains 45 taxa.
 
+# time points are: May == 1, June == 2, July == 3, August == 4, September == 5
 
 ##### Part 1: Prepare tree for models at first flowering #####
 
@@ -141,6 +142,9 @@ floweringsofar2$Transplant.Date <- floweringsofar2$Transplant.Date
 
 # fold difference across all Euphrasia plants in days to flower
 max(floweringsofar2$Days_since_germination, na.rm = TRUE)/min(floweringsofar2$Days_since_germination, na.rm = TRUE)
+# 
+floweringsofar2[, .(mean = mean(Days_since_germination, na.rm = TRUE),
+                    sem = paste("±", sd(Days_since_germination, na.rm = TRUE)/sqrt(.N))), by = .(Host_Species)][order(-mean)]
 
 mcmcfix2<- MCMCglmm(Days_since_germination ~ AnnPer + Functional_group + Transplant.Date, 
                     random = ~ Host_Species + animal, 
@@ -397,6 +401,15 @@ allgrowth6[, animal := Name]
 # add transplant date
 allgrowth7 <- allgrowth3[,.(Unique_ID = as.integer(Unique_ID), Transplant.Date)][allgrowth6, on = "Unique_ID"]
 
+# some basic stats
+# checking annual perennial interactive effect isnt not driven by one host
+allgrowth7[, .(mean = mean(Nodes),
+               sem = sd(Nodes)/sqrt(.N)), by = .(AnnPer, Name, Time)][Time == 4][order(mean)]
+# mean and sem for each host at each time point
+allgrowth7[, .(MeanT = mean(Nodes), SEMT = paste("±", sd(Nodes)/sqrt(.N))), by = .(Name, Time)][
+  Name %in% c("Lotus corniculatus", "Trifolium pratense", "Cynosurus cristatus")
+][order(Name)]
+
 prior.4<-list(R=list(V=diag(3), nu=0.002), 
               G=list(G1=list(V=diag(3), nu=3, alpha.mu=rep(0,3), alpha.V=diag(3)*1000),
                      G2= list(V=diag(1), nu=3, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
@@ -408,9 +421,9 @@ mcmcfix4<-MCMCglmm(Nodes~Time*AnnPer+Functional_group + Transplant.Date,
                    family="poisson", 
                    prior=prior.4, 
                    data=allgrowth7,
-                   nitt=13000*20,
-                   thin=10*20,
-                   burnin=3000*20,
+                   nitt=13000*50,
+                   thin=10*50,
+                   burnin=3000*50,
                    verbose = TRUE,
                    pr=TRUE)
 summary(mcmcfix4)
@@ -429,10 +442,28 @@ write.csv(x = aod::wald.test(cov(mcmcfix4$Sol[,4, drop=F]), colMeans(mcmcfix4$So
 
 # expected number of nodes at time point 1 on perennial 
 
-exp(3.27173) # = 26 times the expected number of nodes at time point 4 compared to time point 2
-exp(0.50560) # 1.6 times the expected number of nodes compared to a perennial grass host at time 2
-# interaction at time point four reduces expected number of nodes by 24 times
-exp(3.27173+-2.38964)
+# not sure this is correct.
+exp(3.06301) # = 21 times the expected number of nodes at time point 4 compared to time point 2
+exp(0.78719) # 2.2 times the expected number of nodes compared to a perennial grass host at time 2
+# interaction at time point four reduces expected number of nodes by 19 times
+exp(3.06301+-2.33833)
+
+#  intercept + time4 = expected number of nodes at time4 for perennial grass
+exp(summary(mcmcfix4)$solutions[1,1] + #intercept
+      summary(mcmcfix4)$solutions[3,1] +
+      summary(mcmcfix4)$solutions[9,1]*mean(allgrowth7$Transplant.Date))/ # time 4
+
+exp(summary(mcmcfix4)$solutions[1,1] + #intercept
+      summary(mcmcfix4)$solutions[3,1] + # time 4
+      summary(mcmcfix4)$solutions[4,1] +
+      summary(mcmcfix4)$solutions[11,1] + 
+      summary(mcmcfix4)$solutions[9,1]*mean(allgrowth7$Transplant.Date)) # interaction with annual/perrenial
+# both of these mean the same thing, that there is a 4.7 times difference in expected number of nodes
+# between annual and perennial plants at time point 4
+exp(3.06301 +  0.78719 + -2.33833)
+
+# which species are contributing to the significance of the time point 4 annual...
+Solapply(mcmcfix4)[Group == "Time4"][order(-Grouped_Value)]
 
 
 ##### Plot 1: Event history analysis #####
@@ -490,10 +521,12 @@ ggsave(filename = "./Figures/Many_hosts/two_families_survival_joined", plot = pl
 ##### Plot 2: Reproductive nodes at end of season with phylogeny #####
 
 # create the ggtree object
+d <- data.frame(label = constraint.2$tip.label)
 (p<-ggtree(phytools::force.ultrametric(constraint.2))+
     geom_tiplab(size = 4)+ theme(axis.line = element_blank())+
     geom_cladelabel(node=64, label="Legumes", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
-    geom_cladelabel(node=53, label="Grasses", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5))
+    geom_cladelabel(node=53, label="Grasses", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)
+   )
 # data to go with the tree
 phylodat<-allgrowth3[,c("Name","C.R.Nodes.F", "Functional_group", "Family")]
 phylodat$group <- phylodat$Name
@@ -532,9 +565,10 @@ plot_2 <- facet_plot(finalplot, panel = "Cumulative Reproductive Nodes",
   geom_hilight(node=31, fill="tomato", alpha=.2, extendto = 1.5)+
   geom_hline(yintercept = c(8.5, 16.5, 21.5, 27.5), lty =2, alpha = 0.3)
 
-ggsave(filename = "./Figures/Many_hosts/Cum_reprod_nodes_phylo", plot = plot_2, 
+ggsave(filename = "./Figures/Many_hosts/Cum_reprod_nodes_phylo.pdf", plot = plot_2, 
        device = "pdf", width = 9, height = 7, units = "in")
-
+ggsave(filename = "./Figures/Many_hosts/Cum_reprod_nodes_phylo.jpeg", plot = plot_2, 
+       device = "jpeg", width = 9, height = 7, units = "in")
 
 ##### Plot 3: Effect of annual/perennial over time (host life history) #####
 # reproductive nodes over time (for functional group and annual or perennial!)
