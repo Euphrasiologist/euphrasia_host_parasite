@@ -1,10 +1,10 @@
 "","Response","Variable","Posterior Mode","lowerHPD","upperHPD"
-"1","Days to flower","Host Species",0.0207502560229669,0.000309838049392514,0.0345192264188406
-"2","Days to flower","animal",0.00153904105622606,2.93280219413381e-08,0.190569369094888
-"3","Days to flower","units",0.0511835928779726,0.0424293585003403,0.0578872005380013
-"4","Survival","Host Species",0.192301103266395,0.0878667406314282,0.358591553720602
-"5","Survival","animal",0.0071482575068405,2.21990448162635e-06,1.08789063272079
-"6","Survival","units",0.999867278016339,1,1
-"7","End of season reproduction","Host Species",5.48289276076747,2.2185050703857,12.679018296788
-"8","End of season reproduction","animal",13.628831453413,5.58928860437658e-05,70.3665037474488
-"9","End of season reproduction","units",5.01650568125495,4.26873271791362,5.89756405674648
+"1","Days to flower","Host Species","0.0208","0.0003","0.0345"
+"2","Days to flower","animal","0.0015","0.0000","0.1906"
+"3","Days to flower","units","0.0512","0.0424","0.0579"
+"4","Survival","Host Species","0.1923","0.0879","0.3586"
+"5","Survival","animal","0.0071","0.0000","1.0879"
+"6","Survival","units","0.9999","1.0000","1.0000"
+"7","End of season reproduction","Host Species","5.4829","2.2185","12.6790"
+"8","End of season reproduction","animal","13.6288","0.0001","70.3665"
+"9","End of season reproduction","units","5.0165","4.2687","5.8976"

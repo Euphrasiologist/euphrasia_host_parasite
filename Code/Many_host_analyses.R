@@ -9,7 +9,8 @@
 library(ape)
 library(MCMCglmm)
 library(data.table)
-library(VCVglmm)
+#devtools::install_github("Euphrasiologist/VCVglmm")
+library(VCVglmm) ## not on CRAN
 library(ggplot2) 
 library(ggtree)
 library(ggridges)
@@ -17,6 +18,42 @@ library(dplyr)
 library(phangorn) 
 library(Hmisc)
 library(ggrepel)
+library(ggnewscale)
+
+reroot_node_mapping <- function(tree, tree2) {
+  root <- rootnode(tree)
+  
+  node_map <- data.frame(from=1:getNodeNum(tree), to=NA, visited=FALSE)
+  node_map[1:Ntip(tree), 2] <- match(tree$tip.label, tree2$tip.label)
+  node_map[1:Ntip(tree), 3] <- TRUE
+  
+  node_map[root, 2] <- root
+  node_map[root, 3] <- TRUE
+  
+  node <- rev(tree$edge[,2])
+  for (k in node) {
+    ##ip <- getParent(tree, k)
+    ip <- parent(tree, k)
+    if (node_map[ip, "visited"])
+      next
+    
+    ## cc <- getChild(tree, ip)
+    cc <- child(tree, ip)
+    node2 <- node_map[cc,2]
+    if (anyNA(node2)) {
+      node <- c(node, k)
+      next
+    }
+    
+    ## to <- unique(sapply(node2, getParent, tr=tree2))
+    to <- unique(sapply(node2, parent, .data=tree2))
+    to <- to[! to %in% node_map[,2]]
+    node_map[ip, 2] <- to
+    node_map[ip, 3] <- TRUE
+  }
+  node_map <- node_map[, -3]
+  return(node_map)
+}
 
 # functions used
 
@@ -29,7 +66,7 @@ logit2prob <- function(logit){
 probit2prob <- function(probit){
   pnorm(probit)
 }
-# development version VCVapply, may want to merge functionality with Solapply
+
 VCVapply <- function(model, FUN = coda::HPDinterval){
   if (attributes(model)$class != "MCMCglmm") {
     stop("Object not of class MCMCglmm")
@@ -58,6 +95,7 @@ VCVapply <- function(model, FUN = coda::HPDinterval){
   }
   temp <- setDT(as.data.frame(apply(model$VCV, 2, fun)), keep.rownames = TRUE)
   colnames(temp) <- c("Variable", name <- paste(deparse(substitute(FUN))))
+  name
   return(temp)
 }
 
@@ -80,21 +118,34 @@ VCVapply <- function(model, FUN = coda::HPDinterval){
 
 # constraint tree output
 constraint <- read.tree(text = "(Agrostis_capillaris:0.0103868960,Lagurus_ovatus:0.0137334981,((((Cynosurus_cristatus:0.0119501076,Festuca_rubra:0.0143927581)56:0.0014297595,Holcus_lanatus:0.0116621244)61:0.0018419113,Phleum_pratense:0.0106048521)100:0.0080082346,((Zea_mays:0.0376747406,((((Allium_ursinum:0.0696170091,Galanthus_nivalis:0.0548052238)amaryllidaceae/100:0.0011547212,Hyacinthoides_non_scripta:0.0509074406)100:0.0322710961,Dactylorhiza_purpurella:0.0989415971)asparagales/100:0.0128940050,((((((Sorbus_aucuparia:0.0314958348,Fragaria_vesca:0.0582563355)rosaceae/100:0.0349788544,((((Ononis_spinosa:0.0220743766,(Lathyrus_japonicus:0.0294240865,Trifolium_pratense:0.0339786483)100:0.0021655535)100:0.0183607112,Lotus_corniculatus:0.0850694608)100:0.0000019136,Ulex_europaeus:0.0718966448)100:0.0000027395,Vicia_cracca:0.0479406736)fabaceae/100:0.0785149642)100:0.0148394884,(Arabidopsis_thaliana:0.1250612607,Helianthemum_nummularium:0.1469119452)malvales_to_brassicales/100:0.0195592609)100:0.0150299043,((((((Meum_athamanticum:0.0221268430,Anthriscus_sylvestris:0.0221983048)apiaceae/100:0.0502387307,Centranthus_ruber:0.1162127616)100:0.0022623680,((Centaurea_nigra:0.0172220154,(Leucanthemum_vulgare:0.0331192970,Tragopogon_pratensis:0.0182447955)100:0.0000023339)100:0.0048658069,Senecio_vulgaris:0.0209331617)asteraceae/100:0.0535848492)100:0.0118251564,(((Thymus_polytrichus:0.0579324847,Mimulus_guttatus:0.0360518925)100:0.0082342727,Plantago_lanceolata:0.0899883709)100:0.0336066248,(Galium_aparine:0.0100601356,Galium_verum:0.0102328988)galium/100:0.1193345682)100:0.0185788636)100:0.0088343295,Erica_tetralix:0.1160061555)ericales_to_asterales/100:0.0079753034,(((Chenopodium_album:0.0332635734,Chenopodium_bonus_henricus:0.0105604686)chenopodium/100:0.0238607464,(Silene_dioica:0.0014311631,Silene_latifolia:0.0000024274)silene/100:0.0808030168)100:0.0364786972,Rumex_acetosella:0.1210989875)caryophyllales/100:0.0287067285)100:0.0088664052)100:0.0236664505,Papaver_rhoeas:0.1015330721)eudicots/100:0.0318216294,(Pinus_sylvestris:0.2367123693,(Equisetum_arvense:0.3878874112,(Cystopteris_fragilis:0.1233674528,Pteridium_aquilinum:0.1016667919)100:1.0445751830)100:0.2401868160)seedplants/100:0.1314408258)poales_to_asterales/100:0.0454413537)100:0.1494656671)100:0.0242458362,Hordeum_vulgare:0.0237302454)93:0.0060960686)poaceae/100:0.0096602096);")
+bootstrap_constraint_tree <- read.tree(text = "(Agrostis_capillaris:0.0107710360,Lagurus_ovatus:0.0141798036,((((Cynosurus_cristatus:0.0123446665,Festuca_rubra:0.0149004779)55:0.0014738722,Holcus_lanatus:0.0120445040)61:0.0018973896,Phleum_pratense:0.0109832005)100:0.0082685225,((Zea_mays:0.0387534621,((((Allium_ursinum:0.0711800196,Galanthus_nivalis:0.0563932560)100:0.0012469692,Hyacinthoides_non_scripta:0.0521906528)100:0.0324660729,Dactylorhiza_purpurella:0.1012756953)100:0.0132311314,((((((Sorbus_aucuparia:0.0320477420,Fragaria_vesca:0.0597722657)100:0.0355510987,((((Ononis_spinosa:0.0225239509,(Lathyrus_japonicus:0.0303051384,Trifolium_pratense:0.0348177570)100:0.0024167048)100:0.0195230095,Lotus_corniculatus:0.0867822377)100:0.0000025677,Ulex_europaeus:0.0727823582)100:0.0000028302,Vicia_cracca:0.0505748224)100:0.0797846620)100:0.0152630847,(Arabidopsis_thaliana:0.1279453101,Helianthemum_nummularium:0.1509497337)100:0.0190292662)100:0.0150228594,((((((Meum_athamanticum:0.0230119844,Anthriscus_sylvestris:0.0227254472)100:0.0512075747,Centranthus_ruber:0.1187558648)100:0.0022990675,((Centaurea_nigra:0.0177791451,(Leucanthemum_vulgare:0.0341583391,Tragopogon_pratensis:0.0189617581)100:0.0000023355)100:0.0050033436,Senecio_vulgaris:0.0214150336)100:0.0547642617)100:0.0122871060,(((Thymus_polytrichus:0.0594431597,Mimulus_guttatus:0.0370743890)100:0.0083251593,Plantago_lanceolata:0.0918113826)100:0.0343244347,(Galium_aparine:0.0103710922,Galium_verum:0.0105322854)100:0.1214619832)100:0.0191267155)100:0.0093641745,Erica_tetralix:0.1184830873)100:0.0079251519,(((Chenopodium_album:0.0343216889,Chenopodium_bonus_henricus:0.0110239352)100:0.0247768734,(Silene_dioica:0.0014916328,Silene_latifolia:0.0000021549)100:0.0826029828)100:0.0373898514,Rumex_acetosella:0.1235274096)100:0.0292642418)100:0.0094711485)100:0.0238596466,Papaver_rhoeas:0.1030491281)100:0.0331534728,(Pinus_sylvestris:0.2391077191,(Equisetum_arvense:0.3946018682,(Cystopteris_fragilis:0.1247748389,Pteridium_aquilinum:0.1041459185)100:1.0852017555)100:0.2437925802)100:0.1327500423)100:0.0457150606)100:0.1511567568)100:0.0248840705,Hordeum_vulgare:0.0244810139)96:0.0062754228)100:0.0099786179);")
 
 # remove the underscores
 constraint$tip.label <- gsub("_", " ", constraint$tip.label) 
+bootstrap_constraint_tree$tip.label <- gsub("_", " ", bootstrap_constraint_tree$tip.label) 
 # correct the tip labels
 constraint$tip.label[10] <- "Hyacinthoides non-scripta"
 constraint$tip.label[36] <- "Chenopodium bonus-henricus"
 constraint$tip.label[43] <- "Cystopteris dickieana"
 
+bootstrap_constraint_tree$tip.label[10] <- "Hyacinthoides non-scripta"
+bootstrap_constraint_tree$tip.label[36] <- "Chenopodium bonus-henricus"
+bootstrap_constraint_tree$tip.label[43] <- "Cystopteris dickieana"
+
 # Remove tips that do not occur in the data.
-constraint.1<-drop.tip(constraint, tip = c("Dactylorhiza purpurella", "Thymus polytrichus", "Pteridium aquilinum"))
+constraint.1 <- drop.tip(constraint, tip = c("Dactylorhiza purpurella", "Thymus polytrichus", "Pteridium aquilinum"))
+bootstrap_constraint_tree.1 <- drop.tip(bootstrap_constraint_tree, tip = c("Dactylorhiza purpurella", "Thymus polytrichus", "Pteridium aquilinum"))
 constraint.1$node.label <- NULL
+
+# do not make node labels null
+bootstrap_constraint_tree.1
+
 # root tree @ Cystopteris.
 constraint.1 <- root(phy = constraint.1, outgroup = "Cystopteris dickieana", resolve.root = TRUE)
+bootstrap_constraint_tree.1 <- root(phy = bootstrap_constraint_tree.1, outgroup = "Cystopteris dickieana", resolve.root = TRUE)
 # edge cannot be zero, so make it tiny
 constraint.1$edge.length[1] <- 1e-10
+bootstrap_constraint_tree.1$edge.length[1] <- 1e-10
 
 # comparison of chronoMPL, ultrametric and the difference it makes
 # the second is the more realistic and not different from 
@@ -290,7 +341,7 @@ survivaldata.2$Transplant.Date <- survivaldata.2$Transplant.Date -97
 prior.eha <-list(R=list(V=diag(1), fix=1), 
                  G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
                         G2=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
-
+survivaldata.2$Time <- as.factor(survivaldata.2$Time)
 
 eha.1 <- MCMCglmm(y ~ 1 + Time+AnnPer+ Transplant.Date + Functional_group,
                   random = ~Name + animal,
@@ -305,18 +356,25 @@ eha.1 <- MCMCglmm(y ~ 1 + Time+AnnPer+ Transplant.Date + Functional_group,
                   pr=TRUE)
 
 summary(eha.1)
+posterior.sd(eha.1)
+# posterior mode of the standard deviation of host species conditional on phylogeny
+sqrt(posterior.mode(as.mcmc(rowSums(eha.1$VCV[,c(1,2)]))))
+sqrt(HPDinterval(as.mcmc(rowSums(eha.1$VCV[,c(1,2)]))))
+# posterior modes of the fixed effects
+posterior.mode(as.mcmc(eha.1$Sol[,1:eha.1$Fixed$nfl]))
+
 # print table to put into the manuscript:
 write.csv(x = specify_decimal(summary(eha.1)$solutions, 4), 
           file = "./Data/Many_hosts/Model_outputs/Survival/EHA_solutions.csv")
 
 # functional group wald test
-write.csv(x = aod::wald.test(cov(eha.1$Sol[,7:10, drop=F]), colMeans(eha.1$Sol[,7:10, drop=F]), Terms=1:4)$result$chi2,
+write.csv(x = aod::wald.test(cov(eha.1$Sol[,5:8, drop=F]), colMeans(eha.1$Sol[,5:8, drop=F]), Terms=1:4)$result$chi2,
           file = "./Data/Many_hosts/Model_outputs/Survival/Functional_group_Wald_Test.csv")
 # annual perennial
-write.csv(x = aod::wald.test(cov(eha.1$Sol[,5, drop=F]), colMeans(eha.1$Sol[,5, drop=F]), Terms=1)$result$chi2,
+write.csv(x = aod::wald.test(cov(eha.1$Sol[,3, drop=F]), colMeans(eha.1$Sol[,3, drop=F]), Terms=1)$result$chi2,
           file = "./Data/Many_hosts/Model_outputs/Survival/AnnPer_Wald_Test.csv")
 # covariance of functional group. Save
-write.csv(x = cov(eha.1$Sol[,7:10, drop=F]), 
+write.csv(x = cov(eha.1$Sol[,5:8, drop=F]), 
           file = "./Data/Many_hosts/Model_outputs/Survival/Var_Covar_Functional_group.csv")
 
 # joint phylogenetic distribution of variance
@@ -427,7 +485,9 @@ write.csv(x = nodesvcv <- cbind(Response = "End of season reproduction", VCVappl
 
 varcomps <- rbind(daysvcv, ehavcv, nodesvcv)[Variable %in% c("Host_Species", "Name"), Variable := "Host Species"][Variable == "animal", Variable := "Phylogeny"]
 
-write.csv(x = varcomps, file = "./Data/Many_hosts/Model_outputs/varcomps.csv")
+varcomps2 <- cbind(varcomps[,c(1,2)], VCVglmm::specify_decimal(x = varcomps[,c(3:5)], k = 4))
+
+write.csv(x = varcomps2, file = "./Data/Many_hosts/Model_outputs/varcomps.csv")
 
 
 ##### Part 6: Reproductive nodes over time #####
@@ -459,14 +519,15 @@ allgrowth7[, .(mean = mean(Nodes),
                sem = sd(Nodes)/sqrt(.N)), by = .(AnnPer, Name, Time)][Time == 4][order(mean)]
 # mean and sem for each host at each time point
 # May == 1, June == 2, July == 3, August == 4, September == 5
-allgrowth7[, .(MeanT = mean(Nodes), SEMT = paste("±", sd(Nodes)/sqrt(.N))), by = .(Name, Time)][
+write.csv(x = allgrowth5[, .(MeanT = mean(Nodes), SEMT = paste("±", sd(Nodes)/sqrt(.N))), by = .(Name, Time)][
   Name %in% c("Lotus corniculatus", "Trifolium pratense", "Cynosurus cristatus")
-][order(Name)]
+][order(Name)], file = "./Data/Many_hosts/Model_outputs/Reproduction_over_time/example_time_points.csv")
 
 prior.4<-list(R=list(V=diag(3), nu=0.002), 
               G=list(G1=list(V=diag(3), nu=3, alpha.mu=rep(0,3), alpha.V=diag(3)*1000),
                      G2= list(V=diag(1), nu=3, alpha.mu=rep(0,1), alpha.V=diag(1)*1000)))
 # run for 13,000 X 20 iterations...
+# I should add transplant date here?
 mcmcfix4<-MCMCglmm(Nodes~Time*AnnPer+Functional_group + Transplant.Date,
                    random = ~ us(Time):Name + animal,
                    ginverse = list(animal=AinvULT2),
@@ -521,15 +582,22 @@ Solapply(mcmcfix4)[Group == "Time4"][order(-Grouped_Value)]
 
 ##### Plot 1: Event history analysis #####
 
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 # make time numeric for smooth interpolation
 survivaldata.2$Time <- as.numeric(survivaldata.2$Time)
 
 # this plot takes three largest families, two coincide with their own functional group
-plot_1 <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")], 
+# May == 1, June == 2, July == 3, August == 4, September == 5
+
+surv_plot_dat <- survivaldata.2[Family %in% c("Poaceae", "Fabaceae")]
+surv_plot_dat[, Family := ifelse(Family == "Poaceae", yes = "a", no = "b")]
+
+  plot_1 <- ggplot(surv_plot_dat, 
                  aes(x=Time, y=y,group=Name))+
   geom_point(alpha=0.1, position = position_jitter(width = 0.2, height = 0.2))+
   facet_wrap(~Family, scales = "free_x")+
-  geom_smooth(aes(x=Time, y=y, col = Name), 
+  geom_smooth(aes(x=Time, y=y, col = Family), 
               method = "glm", 
               method.args = list(family = "binomial"), 
               se = FALSE, size = 1)+
@@ -541,45 +609,78 @@ plot_1 <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")],
         axis.title.y = element_text(size = 20),
         legend.title = element_text(size = 20),
         strip.background = element_blank(),
-        strip.text.x = element_text(size = 20),
-        legend.text = element_text(face = "italic"))
+        strip.text.x = element_text(size = 20, hjust = 0, face = "bold"),
+        legend.text = element_text(face = "italic"),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black")) +
+    scale_color_manual(values = alpha(c(cbPalette[8], cbPalette[4]), 0.3)) + 
+    scale_x_continuous(breaks = 1:4, labels =  c("May", "June", "July", "August"))+
+    new_scale_colour()+
+    scale_color_manual(values = alpha(c(cbPalette[8], cbPalette[4]), 1))+
+    geom_smooth(aes(x=Time, y=y, col = Family, group = Family), 
+                method = "glm", 
+                method.args = list(family = "binomial"), 
+                se = TRUE, size = 2)
 
-
+  plot_1
+  
+  
 ggsave(filename = "./Figures/Many_hosts/two_families_survival.pdf", plot = plot_1, 
        device = "pdf", width = 6, height = 5, units = "in")
 ggsave(filename = "./Figures/Many_hosts/two_families_survival.jpeg", plot = plot_1, 
        device = "jpeg", width = 6, height = 5, units = "in")
 
-plot_1_group <- ggplot(survivaldata.2[Family %in% c("Poaceae", "Fabaceae")], 
-                 aes(x=Time, y=y,group=Family))+
-  geom_point(alpha=0.1, position = position_jitter(width = 0.2, height = 0.2))+
-  #facet_wrap(~Family, scales = "free_x")+
-  geom_smooth(aes(x=Time, y=y, col = Family), 
-              method = "glm", 
-              method.args = list(family = "binomial"), 
-              se = TRUE, size = 1)+
-  ylim(c(0,1))+
-  theme_bw()+
-  ylab(label = "Probability of survival")+
-  labs(colour = "Species")+
-  theme(axis.title.x = element_text(size = 20),
-        axis.title.y = element_text(size = 20),
-        legend.title = element_text(size = 20),
-        strip.background = element_blank(),
-        strip.text.x = element_text(size = 20))
-
-ggsave(filename = "./Figures/Many_hosts/two_families_survival_joined", plot = plot_1_group, 
-       device = "pdf", width = 6, height = 5, units = "in")
 
 ##### Plot 2: Reproductive nodes at end of season with phylogeny #####
 
+bootstrap_constraint_tr <- treeio::read.newick("./Data/Many_hosts/270220_bootstrap.newick", node.label = "support")
+# remove the underscores
+bootstrap_constraint_tr@phylo$tip.label <- gsub("_", " ", bootstrap_constraint_tr@phylo$tip.label) 
+# correct the tip labels
+bootstrap_constraint_tr@phylo$tip.label[10] <- "Hyacinthoides non-scripta"
+bootstrap_constraint_tr@phylo$tip.label[36] <- "Chenopodium bonus-henricus"
+bootstrap_constraint_tr@phylo$tip.label[43] <- "Cystopteris dickieana"
+
+### ROOTING TREE ###
+
+# root tree @ Cystopteris.
+bootstrap_constraint_tr2 <- treeio::root(phy = bootstrap_constraint_tr, outgroup = "Cystopteris dickieana")
+# edge cannot be zero, so make it tiny
+bootstrap_constraint_tr2$edge.length[1] <- 1e-10
+
+# get support values
+support <- setDT(bootstrap_constraint_tr@data)
+bootstrap_constraint_tr2$node.label[-1]
+# manual editing.
+show_boot <- c(rep(NA, 45), support$support, NA)
+
+# constraint shows some orders
+ggtree(phytools::force.ultrametric(constraint))+geom_nodelab()
+
+(p <- ggtree(phytools::force.ultrametric(bootstrap_constraint_tr2))+
+  geom_tiplab(size = 4) + theme(axis.line = element_blank()) + 
+  xlim_tree(1.5)+
+  geom_point2(aes(subset=!is.na(show_boot), fill = show_boot), pch=21, size = 3)+
+  scale_fill_gradient(low = cbPalette[4], high = cbPalette[8], guide = "legend")+
+  #theme(legend.position = "none")+
+  geom_nodelab()+
+  geom_cladelabel(node=54, label="Monocots", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
+  geom_cladelabel(node=71, label="Asterales", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
+  geom_cladelabel(node=83, label="Caryophyllales", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
+  geom_cladelabel(node=64, label="Fabales", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5))
+
+p
 # create the ggtree object
-d <- data.frame(label = constraint.2$tip.label)
-(p<-ggtree(phytools::force.ultrametric(constraint.2))+
-    geom_tiplab(size = 4)+ theme(axis.line = element_blank())+
-    geom_cladelabel(node=64, label="Legumes", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
-    geom_cladelabel(node=53, label="Grasses", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)
-   )
+#d <- data.frame(label = bootstrap_constraint_tr2$tip.label)
+#(p<-ggtree(phytools::force.ultrametric(constraint.2))+
+#    geom_tiplab(size = 4)+ theme(axis.line = element_blank())+ # add higher taxonomic labels here.
+#    geom_cladelabel(node=64, label="Legumes", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
+#    geom_cladelabel(node=53, label="Grasses", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)
+#   )
 # data to go with the tree
 phylodat<-allgrowth3[,c("Name","C.R.Nodes.F", "Functional_group", "Family")]
 phylodat$group <- phylodat$Name
@@ -601,22 +702,39 @@ phylodat1.1 <- unique(phylodat1.1)
                                      xmax = Mean.Cum +SD.Cum,
                                      group = group),
                        geom = geom_errorbarh)+
-    theme_tree2())
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank()))
 # overlay the red observational points
-plot_2 <- facet_plot(finalplot, panel = "Cumulative Reproductive Nodes",
+(plot_2 <- facet_plot(finalplot, panel = "Cumulative Reproductive Nodes",
            data = phylodat1.1,
            mapping = aes(x=Mean.Cum, group = group),
-           geom = geom_point, col = "red", size = 3)+
+           geom = geom_point, fill = "red", size = 3, pch=21)+
   theme_bw()+
-  theme(strip.text.x = element_text(size=20, face = "bold", vjust = 1),
+  theme(strip.text.x = element_text(size=20),
         strip.background = element_rect(colour="white", fill="white"),
         axis.line.x = element_line(colour = "black"),
         axis.text.y.left = element_blank(),
-        axis.ticks.y.left = element_blank())+
-  geom_hilight(node=53, fill="darkgreen", alpha=.2, extendto = 1.5)+
-  geom_hilight(node=64, fill="steelblue", alpha=.2, extendto = 1.5)+
-  geom_hilight(node=31, fill="tomato", alpha=.2, extendto = 1.5)+
-  geom_hline(yintercept = c(8.5, 16.5, 21.5, 27.5), lty =2, alpha = 0.3)
+        axis.ticks.y.left = element_blank(),
+        legend.position = "none")+
+  
+  geom_hilight(node=53, fill=cbPalette[4], alpha=.2, extendto = 1.5)+
+  geom_hilight(node=64, fill=cbPalette[6], alpha=.2, extendto = 1.5)+
+  geom_hilight(node=55, fill=cbPalette[7], alpha=.2, extendto = 1.5)+ # monocots but not grasses.
+  geom_hilight(node=73, fill=cbPalette[7], alpha=.2, extendto = 1.5)+ # above mimulus
+  geom_hilight(node=82, fill=cbPalette[7], alpha=.2, extendto = 1.5)+ # galium
+  geom_hilight(node=83, fill=cbPalette[7], alpha=.2, extendto = 1.5)+  
+  geom_hilight(node=30, fill=cbPalette[7], alpha=.2, extendto = 1.5)+ # mimulus
+  geom_hilight(node=34, fill=cbPalette[1], alpha=.2, extendto = 1.5)+ #erica
+  geom_hilight(node=29, fill=cbPalette[1], alpha=.2, extendto = 1.5)+ # thymus
+  geom_hilight(node=31, fill=cbPalette[7], alpha=.2, extendto = 1.5)+ #plantago
+  geom_hilight(node=44, fill=cbPalette[5], alpha=.2, extendto = 1.5) #plantago  
+  )
+# geom_hline(yintercept = c(8.5, 16.5, 21.5, 27.5), lty =2, alpha = 0.3)
+# 54 is galanthus to dactylorhiza
+# 60 between vicia and festuca
+# pinus 87?
+# 78 for erica?
+# some edits in photoshop...
 
 ggsave(filename = "./Figures/Many_hosts/Cum_reprod_nodes_phylo.pdf", plot = plot_2, 
        device = "pdf", width = 9, height = 7, units = "in")
