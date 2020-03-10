@@ -259,18 +259,26 @@ write.csv(x = aod::wald.test(cov(mcmcfix2$Sol[,2, drop=F]), colMeans(mcmcfix2$So
 write.csv(x = aod::wald.test(cov(mcmcfix2$Sol[,3:6, drop=F]), colMeans(mcmcfix2$Sol[,3:6, drop=F]), Terms=1:4)$result,
           file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Functional_Group_Wald_Test.csv")
 
+# effect of phylogeny
+write.csv(list(posterior.mode(as.mcmc((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV))),
+               HPDinterval(as.mcmc((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV)))), 
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Phylogeny_Variance.csv")
+
 # joint phylogenetic distribution
 write.csv(list(posterior.mode(as.mcmc(rowSums(mcmcfix2$VCV[,c(1,2)])/rowSums(mcmcfix2$VCV))),
                HPDinterval(as.mcmc(rowSums(mcmcfix2$VCV[,c(1,2)])/rowSums(mcmcfix2$VCV)))), 
           file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Joint_Phylogeny_Variance.csv")
+# effect of species
+write.csv(list(posterior.mode(as.mcmc((mcmcfix2$VCV[,c(1)])/rowSums(mcmcfix2$VCV))),
+               HPDinterval(as.mcmc((mcmcfix2$VCV[,c(1)])/rowSums(mcmcfix2$VCV)))), 
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Species_Variance.csv")
+# units
+write.csv(list(posterior.mode(as.mcmc((mcmcfix2$VCV[,c(3)])/rowSums(mcmcfix2$VCV))),
+               HPDinterval(as.mcmc((mcmcfix2$VCV[,c(3)])/rowSums(mcmcfix2$VCV)))), 
+          file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Units_Variance.csv")
 
-# and the phylogenetic component
 
-write.csv(list(posterior.mode(as.mcmc((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV[,c(1,2)]))),
-               HPDinterval(as.mcmc((mcmcfix2$VCV[,c(2)])/rowSums(mcmcfix2$VCV[,c(1,2)])))),
-          file = "/Users/mbrown/Dropbox/Euphrasia 2016 common garden hosts vs pops/Experiments 2017_8/Manuscript/Models_Figures/Models/Single_Euphrasia_sp/Days_to_flower/Phylogeny_Variance.csv")
-
-# variance components
+# variance components (redundant now?)
 write.csv(x = daysvcv <- cbind(Response = "Days to flower",VCVapply(mcmcfix2)),
           file = "./Data/Many_hosts/Model_outputs/Days_to_flower/VCV_days.csv")
 
@@ -662,12 +670,12 @@ show_boot <- c(rep(NA, 45), support$support, NA)
 ggtree(phytools::force.ultrametric(constraint))+geom_nodelab()
 
 (p <- ggtree(phytools::force.ultrametric(bootstrap_constraint_tr2))+
-  geom_tiplab(size = 4) + theme(axis.line = element_blank()) + 
+  geom_tiplab(size = 4, font = "italic") + theme(axis.line = element_blank()) + 
   xlim_tree(1.5)+
   geom_point2(aes(subset=!is.na(show_boot), fill = show_boot), pch=21, size = 3)+
-  scale_fill_gradient(low = cbPalette[4], high = cbPalette[8], guide = "legend")+
-  #theme(legend.position = "none")+
-  geom_nodelab()+
+  scale_fill_gradient(low = cbPalette[4], high = cbPalette[8], guide = "legend", name= "Bootstrap Support")+
+  theme(legend.position = c(0.1, 0.85))+
+  #geom_nodelab()+
   geom_cladelabel(node=54, label="Monocots", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
   geom_cladelabel(node=71, label="Asterales", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
   geom_cladelabel(node=83, label="Caryophyllales", align=TRUE, angle = 270, offset =1, hjust = 0.5, offset.text = 0.05, barsize = 1.5)+
@@ -686,8 +694,8 @@ phylodat<-allgrowth3[,c("Name","C.R.Nodes.F", "Functional_group", "Family")]
 phylodat$group <- phylodat$Name
 
 # group the data by host species
-phylodat1.1 <- phylodat[, .(Mean.Cum = mean(na.omit(C.R.Nodes.F)),
-                            SD.Cum = sd(na.omit(C.R.Nodes.F))/sqrt(.N),
+phylodat1.1 <- phylodat[, .(Mean.Cum = mean((na.omit(C.R.Nodes.F)+1)),
+                            SD.Cum = sd((na.omit(C.R.Nodes.F)+1))/sqrt(.N),
                             N = .N,
                             Functional.group = (Functional_group),
                             group = group,
@@ -702,21 +710,29 @@ phylodat1.1 <- unique(phylodat1.1)
                                      xmax = Mean.Cum +SD.Cum,
                                      group = group),
                        geom = geom_errorbarh)+
-    theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()))
+    theme(legend.position = c(0.1, 0.85))+
+    theme(axis.ticks.x = element_blank()))
 # overlay the red observational points
+
+colour_vector <- c(rep(cbPalette[7], 8), cbPalette[1], rep(cbPalette[7], 3), cbPalette[1],
+                   rep(cbPalette[7], 5), rep(cbPalette[6], 6), rep(cbPalette[7], 5),
+                   rep(cbPalette[4], 8), rep(cbPalette[7], 4), cbPalette[1], rep(cbPalette[5], 3))
+
 (plot_2 <- facet_plot(finalplot, panel = "Cumulative Reproductive Nodes",
            data = phylodat1.1,
            mapping = aes(x=Mean.Cum, group = group),
-           geom = geom_point, fill = "red", size = 3, pch=21)+
+           geom = geom_point, fill = rev(colour_vector), size = 4, pch=21)+
   theme_bw()+
   theme(strip.text.x = element_text(size=20),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
         strip.background = element_rect(colour="white", fill="white"),
         axis.line.x = element_line(colour = "black"),
+        axis.text.x = element_text(size = 15),
         axis.text.y.left = element_blank(),
         axis.ticks.y.left = element_blank(),
-        legend.position = "none")+
-  
+        legend.position = c(0.1, 0.85))+
+  # add some hilights, the rest can be added in photoshop.
   geom_hilight(node=53, fill=cbPalette[4], alpha=.2, extendto = 1.5)+
   geom_hilight(node=64, fill=cbPalette[6], alpha=.2, extendto = 1.5)+
   geom_hilight(node=55, fill=cbPalette[7], alpha=.2, extendto = 1.5)+ # monocots but not grasses.
@@ -737,7 +753,7 @@ phylodat1.1 <- unique(phylodat1.1)
 # some edits in photoshop...
 
 ggsave(filename = "./Figures/Many_hosts/Cum_reprod_nodes_phylo.pdf", plot = plot_2, 
-       device = "pdf", width = 9, height = 7, units = "in")
+       device = "pdf", width = 11, height = 12, units = "in", useDingbats=FALSE)
 ggsave(filename = "./Figures/Many_hosts/Cum_reprod_nodes_phylo.jpeg", plot = plot_2, 
        device = "jpeg", width = 9, height = 7, units = "in")
 

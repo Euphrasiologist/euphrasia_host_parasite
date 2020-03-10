@@ -105,6 +105,9 @@ rnodes3[, Trans_date := as.Date(rnodes3$Trans_date, format = "%d/%m/%Y")]
 rnodes3[, Germ_date := as.Date(rnodes3$Germ_date, format = "%d/%m/%Y")]
 # normalised transplant date
 rnodes3[, Norm_Trans_date := as.POSIXlt(rnodes3$Trans_date)$yday-108]
+# relevel population 
+
+rnodes3$Population <- relevel(rnodes3$Population, ref = "A1766")
 
 ##### Part 3: Model of reproductive nodes as a function of Euphrasia species and look for interaction #####
 
@@ -136,7 +139,7 @@ HPDinterval(manysp.2$VCV[,"Host_given_Euphrasia"]/(manysp.2$VCV[,"Host_code"]+ma
 
 # wald tests of significance
 # Euphrasia species & population?
-write.csv(x = aod::wald.test(cov(manysp.2$Sol[,2:7, drop=F]), colMeans(manysp.2$Sol[,2:7, drop=F]), Terms=1:6)$result$chi2,
+write.csv(x = aod::wald.test(cov(manysp.2$Sol[,2:6, drop=F]), colMeans(manysp.2$Sol[,2:6, drop=F]), Terms=1:5)$result$chi2,
           file = "./Data/Many_species/Model_outputs/Host_parasite_interaction/Euphrasia_pop_sig.csv")
 
 
@@ -238,15 +241,22 @@ ggsave(filename = "./Figures/Many_species/posterior_interaction_dist.pdf", plot 
 
 ##### Plot 3: Raw data for the manuscript, means and SE's #####
 
-plot_3.1<- rnodes3[, .(mean = mean(log(Reproductive_nodes), na.rm = TRUE),
+(plot_3.1<- rnodes3[, .(mean = mean(log(Reproductive_nodes), na.rm = TRUE),
             sem = sd(log(Reproductive_nodes), na.rm = TRUE)/sqrt(.N),
             N = .N), by = c("Euphrasia_sp2", "Host_code","Population")] %>% #[Population != "M1767"]
   
   ggplot(aes(x = reorder(Host_code, mean) , y = mean))+
-  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem, group=Euphrasia_sp2), position = position_dodge(width = 0.9), width=0.4)+
-  geom_point(aes(fill = Euphrasia_sp2), position = position_dodge(width = 0.9), size=3, pch=21)+
+  geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem, group=Euphrasia_sp2), position = position_dodge(width = 0.9), width=0.6)+
+  geom_point(aes(fill = Euphrasia_sp2), position = position_dodge(width = 0.9), size=4, pch=21, stroke=1)+
   facet_wrap(~Population)+
-  theme_bw()+ theme(strip.text.x = element_text(size=20),
+  geom_text(data = data.frame(mean = rep(5,6),Host_code = rep("HPU",6), Population = c("A1766",
+                                                                       "M1767",
+                                                                       "M1768",
+                                                                       "M1769",
+                                                                       "T1761",
+                                                                       "V1761")), label = letters[1:6], nudge_x = 0.5, 
+            nudge_y = -0.15, size=8)+
+  theme_bw()+ theme(strip.text.x = element_blank(),#element_text(size=20),
                     strip.background = element_rect(colour="white", fill="white"),
                     axis.line.x = element_line(colour = "black"),
                     panel.grid.major = element_blank(), 
@@ -255,11 +265,11 @@ plot_3.1<- rnodes3[, .(mean = mean(log(Reproductive_nodes), na.rm = TRUE),
                     axis.title.x.bottom = element_text(size = 20),
                     axis.title.y.left = element_text(size = 20),
                     legend.title = element_text(size = 20),
-                    legend.text = element_text(face = "italic"))+
+                    legend.text = element_text(face = "italic"), panel.spacing = unit(0, "lines"))+
   xlab(label = "Host Species")+
-  ylab(label = expression(paste("log(", italic("Euphrasia"), " performance)")))+
+  ylab(label = expression(paste("log(", italic("Euphrasia"), " nodes)")))+
   scale_fill_manual(name = expression(paste(italic("Euphrasia"), " species")),
-                      values = cbPalette[2:5])
+                      values = cbPalette[2:5]))
   
 
 ggsave(filename = "./Figures/Many_species/population_cum_nodes.pdf", plot = plot_3.1, 
