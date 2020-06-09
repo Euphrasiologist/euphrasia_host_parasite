@@ -20,41 +20,6 @@ library(Hmisc)
 library(ggrepel)
 library(ggnewscale)
 
-reroot_node_mapping <- function(tree, tree2) {
-  root <- rootnode(tree)
-  
-  node_map <- data.frame(from=1:getNodeNum(tree), to=NA, visited=FALSE)
-  node_map[1:Ntip(tree), 2] <- match(tree$tip.label, tree2$tip.label)
-  node_map[1:Ntip(tree), 3] <- TRUE
-  
-  node_map[root, 2] <- root
-  node_map[root, 3] <- TRUE
-  
-  node <- rev(tree$edge[,2])
-  for (k in node) {
-    ##ip <- getParent(tree, k)
-    ip <- parent(tree, k)
-    if (node_map[ip, "visited"])
-      next
-    
-    ## cc <- getChild(tree, ip)
-    cc <- child(tree, ip)
-    node2 <- node_map[cc,2]
-    if (anyNA(node2)) {
-      node <- c(node, k)
-      next
-    }
-    
-    ## to <- unique(sapply(node2, getParent, tr=tree2))
-    to <- unique(sapply(node2, parent, .data=tree2))
-    to <- to[! to %in% node_map[,2]]
-    node_map[ip, 2] <- to
-    node_map[ip, 3] <- TRUE
-  }
-  node_map <- node_map[, -3]
-  return(node_map)
-}
-
 # functions used
 
 # manipulating logits and probs
@@ -255,6 +220,11 @@ write.csv(x = specify_decimal(summary(mcmcfix2)$solutions, 4),
 # wald test of annual/perennial
 write.csv(x = aod::wald.test(cov(mcmcfix2$Sol[,2, drop=F]), colMeans(mcmcfix2$Sol[,2, drop=F]), Terms=1)$result,
           file = "./Data/Many_hosts/Model_outputs/Days_to_flower/AnnPer_Wald_Test.csv")
+# lower CI
+exp(4.6196626-0.2703376)
+# upper CI
+exp(4.6196626+0.0043234)
+
 # wald test of functional group
 write.csv(x = aod::wald.test(cov(mcmcfix2$Sol[,3:6, drop=F]), colMeans(mcmcfix2$Sol[,3:6, drop=F]), Terms=1:4)$result,
           file = "./Data/Many_hosts/Model_outputs/Days_to_flower/Functional_Group_Wald_Test.csv")
@@ -369,7 +339,19 @@ posterior.sd(eha.1)
 sqrt(posterior.mode(as.mcmc(rowSums(eha.1$VCV[,c(1,2)]))))
 sqrt(HPDinterval(as.mcmc(rowSums(eha.1$VCV[,c(1,2)]))))
 # posterior modes of the fixed effects
-posterior.mode(as.mcmc(eha.1$Sol[,1:eha.1$Fixed$nfl]))
+# annual/perennial
+posterior.mode(as.mcmc(eha.1$Sol[,"AnnPerAnn"]))
+HPDinterval(as.mcmc(eha.1$Sol[,"AnnPerAnn"]))
+# and joint effect of functional group
+posterior.mode(as.mcmc(c(eha.1$Sol[,"Functional_groupFern"], 
+  eha.1$Sol[,"Functional_groupForb"],
+  eha.1$Sol[,"Functional_groupLegume"],
+  eha.1$Sol[,"Functional_groupWoody"])))
+HPDinterval(as.mcmc(c(eha.1$Sol[,"Functional_groupFern"], 
+                         eha.1$Sol[,"Functional_groupForb"],
+                         eha.1$Sol[,"Functional_groupLegume"],
+                         eha.1$Sol[,"Functional_groupWoody"])))
+
 
 # print table to put into the manuscript:
 write.csv(x = specify_decimal(summary(eha.1)$solutions, 4), 
@@ -581,8 +563,9 @@ exp(summary(mcmcfix4)$solutions[1,1] + #intercept
       summary(mcmcfix4)$solutions[11,1] + 
       summary(mcmcfix4)$solutions[9,1]*mean(allgrowth7$Transplant.Date)) # interaction with annual/perrenial
 # both of these mean the same thing, that there is a 4.7 times difference in expected number of nodes
-# between annual and perennial plants at time point 4
+# between annual and perennial plants at time point 4, roughly below.
 exp(3.06301 +  0.78719 + -2.33833)
+# CI 0.14-127.0
 
 # which species are contributing to the significance of the time point 4 annual...
 Solapply(mcmcfix4)[Group == "Time4"][order(-Grouped_Value)]
@@ -592,16 +575,37 @@ Solapply(mcmcfix4)[Group == "Time4"][order(-Grouped_Value)]
 
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
+surv_plot_dat <- survivaldata[to_add, on = "Unique_ID"][Name != "No host"]
+surv_plot_dat[, y := (y-1)*-1]
+
 # make time numeric for smooth interpolation
-survivaldata.2$Time <- as.numeric(survivaldata.2$Time)
+surv_plot_dat$Time <- as.factor(surv_plot_dat$Time)
+# fill empty factor levels
+completeDT <- function(DT, cols, defs = NULL){
+  mDT = do.call(CJ, c(DT[, ..cols], list(unique=TRUE)))
+  res = DT[mDT, on=names(mDT)]
+  if (length(defs)) 
+    res[, names(defs) := Map(replace, .SD, lapply(.SD, is.na), defs), .SDcols=names(defs)]
+  res[]
+} 
+# fill them
+surv_plot_dat2 <- completeDT(surv_plot_dat, c("Unique_ID", "Time"))
+# invert y
+surv_plot_dat2[is.na(y), y := 0 ]
+# and carry forward last observation of Family
+surv_plot_dat2[, Family := Family[nafill(replace(.I, is.na(Family), NA), "locf")]]
+# and name
+surv_plot_dat2[, Name := Name[nafill(replace(.I, is.na(Name), NA), "locf")]]
 
 # this plot takes three largest families, two coincide with their own functional group
 # May == 1, June == 2, July == 3, August == 4, September == 5
 
-surv_plot_dat <- survivaldata.2[Family %in% c("Poaceae", "Fabaceae")]
-surv_plot_dat[, Family := ifelse(Family == "Poaceae", yes = "a", no = "b")]
+surv_plot_dat3 <- surv_plot_dat2[Family %in% c("Poaceae", "Fabaceae")]
+surv_plot_dat3[, Family := ifelse(Family == "Poaceae", yes = "a", no = "b")]
+# make time numeric for smooth interpolation
+surv_plot_dat3$Time <- as.numeric(surv_plot_dat3$Time)
 
-  plot_1 <- ggplot(surv_plot_dat, 
+  (plot_1 <- ggplot(surv_plot_dat3, 
                  aes(x=Time, y=y,group=Name))+
   geom_point(alpha=0.1, position = position_jitter(width = 0.2, height = 0.2))+
   facet_wrap(~Family, scales = "free_x")+
@@ -617,7 +621,7 @@ surv_plot_dat[, Family := ifelse(Family == "Poaceae", yes = "a", no = "b")]
         axis.title.y = element_text(size = 20),
         legend.title = element_text(size = 20),
         strip.background = element_blank(),
-        strip.text.x = element_text(size = 20, hjust = 0, face = "bold"),
+        strip.text.x = element_text(size = 20, hjust = 0, face = "bold", family = "Helvetica"),
         legend.text = element_text(face = "italic"),
         legend.position = "none",
         panel.grid.major = element_blank(),
@@ -626,21 +630,19 @@ surv_plot_dat[, Family := ifelse(Family == "Poaceae", yes = "a", no = "b")]
         panel.background = element_blank(),
         axis.line = element_line(colour = "black")) +
     scale_color_manual(values = alpha(c(cbPalette[8], cbPalette[4]), 0.3)) + 
-    scale_x_continuous(breaks = 1:4, labels =  c("May", "June", "July", "August"))+
+    scale_x_continuous(breaks = 1:5, labels =  c("May", "June", "July", "August", "September"))+
     new_scale_colour()+
     scale_color_manual(values = alpha(c(cbPalette[8], cbPalette[4]), 1))+
     geom_smooth(aes(x=Time, y=y, col = Family, group = Family), 
                 method = "glm", 
                 method.args = list(family = "binomial"), 
-                se = TRUE, size = 2)
-
-  plot_1
+                se = TRUE, size = 2))
   
   
 ggsave(filename = "./Figures/Many_hosts/two_families_survival.pdf", plot = plot_1, 
-       device = "pdf", width = 6, height = 5, units = "in")
+       device = "pdf", width = 7, height = 6, units = "in")
 ggsave(filename = "./Figures/Many_hosts/two_families_survival.jpeg", plot = plot_1, 
-       device = "jpeg", width = 6, height = 5, units = "in")
+       device = "jpeg", width = 7, height = 6, units = "in")
 
 
 ##### Plot 2: Reproductive nodes at end of season with phylogeny #####
@@ -665,6 +667,9 @@ support <- setDT(bootstrap_constraint_tr@data)
 bootstrap_constraint_tr2$node.label[-1]
 # manual editing.
 show_boot <- c(rep(NA, 45), support$support, NA)
+
+# export newick here
+ape::write.tree(phy = phytools::force.ultrametric(bootstrap_constraint_tr2), file = "./Data/Tree/ultrametric_tree_vis.newick")
 
 # constraint shows some orders
 ggtree(phytools::force.ultrametric(constraint))+geom_nodelab()
@@ -766,12 +771,13 @@ plot_3 <- allgrowth5[, .(Nodes = mean(Nodes), uCI = mean(Nodes)+sd(Nodes)/sqrt(.
   geom_errorbar(aes(ymax = uCI, ymin =lCI), width = 0.05)+
   geom_line(aes(group = AnnPer))+
   theme_bw()+
+  ylab(label = "")
   theme(strip.background = element_blank(), strip.text.x = element_text(size = 20),
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20))
 
-ggsave(filename = "./Figures/Many_hosts/ann_per_time", plot = plot_3, 
-       device = "pdf", width = 6, height = 5, units = "in")
+ggsave(filename = "./Figures/Many_hosts/ann_per_time.pdf", plot = plot_3, 
+       device = "pdf", width = 8, height = 7, units = "in")
 
 ##### Plot 4: What trajectory does an 'average' host follow over time? ######
 
@@ -796,7 +802,7 @@ plot_4 <- overtime %>%
   geom_line(aes(colour = Family))+
   geom_point(alpha=0.5)+
   theme_bw()+
-  theme(strip.background = element_blank(), 
+  theme(strip.background = element_blank(), panel.grid = element_blank(),
         strip.text.x = element_text(size = 20),
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20),
@@ -824,7 +830,9 @@ ggsave(filename = "./Figures/Many_hosts/average_host.jpeg", plot = plot_4,
                                                     "Survival (Threshold, probit)"))
   
   plot_5 <- ggplot(final, aes(x = Density, y = Trait))+
-    theme_bw()+geom_density_ridges()+geom_vline(xintercept = 0, col = "red", lty = 2, size = 1)+
+    theme_bw()+
+    theme(panel.grid = element_blank())+
+    geom_density_ridges()+geom_vline(xintercept = 0, col = "red", lty = 2, size = 1)+
     scale_x_continuous(limits = c(-0.2,1))
 
 ggsave(filename = "./Figures/Many_hosts/joint_variance_explained.pdf", plot = plot_5, 

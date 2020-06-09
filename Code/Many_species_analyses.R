@@ -200,7 +200,32 @@ write.csv(
 
 ##### Plot 2: Posterior Modes of the interaction model #####
 
-plot_2.1 <- Solapply(manysp.2, coda::HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_Euphrasia")] %>%
+# visualise the posterior modes better.
+
+pms <- Solapply(manysp.2, coda::HPDinterval)[order(`Posterior Mode`)][Group %in% c("Host_code", "Host_given_Euphrasia")]
+pms2 <- pms[Group == "Host_given_Euphrasia"]
+
+lis <- strsplit(x = pms2$Variable, split = ".", fixed = TRUE)
+pms2[, Euphrasia_species := sapply(lis, "[[", 2)]
+pms2[, Host := sapply(lis, "[[", 3)]
+
+pms3 <- pms2[,.(Host, Euphrasia_species, lowerHPD, upperHPD, `Posterior Mode`)]
+
+ggplot(pms3, aes(x = reorder(Euphrasia_species, `Posterior Mode`), y = `Posterior Mode`))+
+  facet_wrap(~Host)+
+  geom_hline(yintercept = 0, colour = "red", lty = 2, size = 2)+
+  geom_errorbar(aes(ymin = lowerHPD, ymax = upperHPD, width = 0.4))+
+  geom_point(size = 4)+
+  theme_minimal()+
+  theme(strip.background = element_rect(fill = "white", color = "white"),
+        strip.text = element_text(size = 20),
+        axis.text.x = element_text(angle = 60, hjust = 1))
+
+  #scale_x_discrete(limits = c("ACU", "DFL", "FOV", "HLA", "LPE"))
+
+
+
+plot_2.1 <- pms %>%
   ggplot(aes(x = reorder(Variable, `Posterior Mode`), y = `Posterior Mode`))+
   geom_point()+
   geom_errorbar(aes(ymin = lowerHPD, ymax = upperHPD))+
@@ -240,21 +265,28 @@ ggsave(filename = "./Figures/Many_species/posterior_interaction_dist.pdf", plot 
        device = "pdf", width = 10, height = 6, units = "in") 
 
 ##### Plot 3: Raw data for the manuscript, means and SE's #####
+dat <- rnodes3[, .(mean = mean(log(Reproductive_nodes), na.rm = TRUE),
+                   sem = sd(log(Reproductive_nodes), na.rm = TRUE)/sqrt(.N),
+                   N = .N), by = c("Euphrasia_sp2", "Host_code")]
+meandat <- rnodes3[,.(meanH = mean(log(Reproductive_nodes), na.rm = TRUE)), by = .(Host_code)][order(meanH)]
 
-(plot_3.1<- rnodes3[, .(mean = mean(log(Reproductive_nodes), na.rm = TRUE),
-            sem = sd(log(Reproductive_nodes), na.rm = TRUE)/sqrt(.N),
-            N = .N), by = c("Euphrasia_sp2", "Host_code","Population")] %>% #[Population != "M1767"]
+dat$Euphrasia_sp2 <- factor(dat$Euphrasia_sp2, levels = c("Euphrasia anglica", 
+                                                          "Euphrasia vigursii",
+                                                          "Euphrasia micrantha",
+                                                          "Euphrasia tetraquetra"))
+dat <- dat[meandat, on = .(Host_code)]
+(plot_3.1<- dat %>% 
   
   ggplot(aes(x = reorder(Host_code, mean) , y = mean))+
   geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem, group=Euphrasia_sp2), position = position_dodge(width = 0.9), width=0.6)+
   geom_point(aes(fill = Euphrasia_sp2), position = position_dodge(width = 0.9), size=4, pch=21, stroke=1)+
   facet_wrap(~Population)+
   geom_text(data = data.frame(mean = rep(5,6),Host_code = rep("HPU",6), Population = c("A1766",
+                                                                       "T1761",
+                                                                       "V1761",
                                                                        "M1767",
                                                                        "M1768",
-                                                                       "M1769",
-                                                                       "T1761",
-                                                                       "V1761")), label = letters[1:6], nudge_x = 0.5, 
+                                                                       "M1769")), label = letters[1:6], nudge_x = 0.5, 
             nudge_y = -0.15, size=8)+
   theme_bw()+ theme(strip.text.x = element_blank(),#element_text(size=20),
                     strip.background = element_rect(colour="white", fill="white"),
@@ -268,15 +300,58 @@ ggsave(filename = "./Figures/Many_species/posterior_interaction_dist.pdf", plot 
                     legend.text = element_text(face = "italic"), panel.spacing = unit(0, "lines"))+
   xlab(label = "Host Species")+
   ylab(label = expression(paste("log(", italic("Euphrasia"), " nodes)")))+
-  scale_fill_manual(name = expression(paste(italic("Euphrasia"), " species")),
-                      values = cbPalette[2:5]))
+  scale_fill_manual(name = expression(paste(italic("Euphrasia"), " species")), 
+                    limits = c("Euphrasia anglica", "Euphrasia tetraquetra", "Euphrasia vigursii", "Euphrasia micrantha"),
+                    values = c(cbPalette[2], cbPalette[4], cbPalette[5], cbPalette[3])))
   
 
 ggsave(filename = "./Figures/Many_species/population_cum_nodes.pdf", plot = plot_3.1, 
-       device = "pdf", width = 10, height = 6, units = "in")
+       device = "pdf", width = 10, height = 6, units = "in", useDingbats=FALSE)
 ggsave(filename = "./Figures/Many_species/population_cum_nodes.jpeg", plot = plot_3.1, 
        device = "jpeg", width = 10, height = 6, units = "in")
 
+dat$Host_code <- factor(dat$Host_code, levels = unique(dat$Host_code[order(dat$meanH)]))
+(plot_3.1.1<- ggplot(dat, aes(x = meanH , y = mean))+
+    geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem, group=Euphrasia_sp2), position = position_dodge(width = 0.9), width=0.1)+
+    ggrepel::geom_text_repel(aes(label = Host_code), box.padding = 1.5)+
+    geom_point(fill="grey", position = position_dodge(width = 0.9), size=4, pch=21, stroke=1)+
+    facet_wrap(~Euphrasia_sp2)+
+    geom_abline(slope=1, intercept=0, col="red", lty=2)+
+    geom_text(data = data.frame(mean = rep(5,4),meanH = rep(0,4), Euphrasia_sp2 = c("Euphrasia anglica", 
+                                                                                    "Euphrasia vigursii",
+                                                                                    "Euphrasia micrantha",
+                                                                                    "Euphrasia tetraquetra")), label = letters[1:4], nudge_x = -0.5, 
+              nudge_y = 0, size=8)+
+    geom_text(data = data.frame(mean = rep(5,4),meanH = rep(2,4), Euphrasia_sp2 = c("Euphrasia anglica", 
+                                                                                    "Euphrasia vigursii",
+                                                                                    "Euphrasia micrantha",
+                                                                                    "Euphrasia tetraquetra")), label = c(expression(paste(italic("Euphrasia anglica"))), 
+                                                                                                                                                 expression(paste(italic("Euphrasia vigursii"))),
+                                                                                                                                                                         expression(paste(italic("Euphrasia micrantha"))),
+                                                                                                                                                                                                 expression(paste(italic("Euphrasia tetraquetra")))), nudge_x = -0.5, 
+              nudge_y = 0, size=8)+
+    theme_bw()+ theme(strip.text.x = element_blank(),#element_text(size=20),
+                      strip.background = element_rect(colour="white", fill="white"),
+                      axis.line.x = element_line(colour = "black"),
+                      panel.grid.major = element_blank(), 
+                      panel.grid.minor = element_blank(),
+                      axis.text.x = element_text(size = 10),
+                      axis.text.y = element_text(size = 10),
+                      axis.title.x.bottom = element_text(size = 20),
+                      axis.title.y.left = element_text(size = 20),
+                      legend.title = element_text(size = 20),
+                      legend.text = element_text(face = "italic"), panel.spacing = unit(0, "lines"))+
+    ylab(label = expression(paste("log(", italic("Euphrasia"), " nodes per host)")))+
+    xlab(label = expression(paste("log(Mean ", italic("Euphrasia"), " nodes per host)")))+
+    #scale_x_continuous(breaks = unique(dat$meanH), labels = 1:13)+
+    scale_fill_manual(name = expression(paste(italic("Euphrasia"), " species")), 
+                      limits = c("Euphrasia anglica", "Euphrasia tetraquetra", "Euphrasia vigursii", "Euphrasia micrantha"),
+                      values = c(cbPalette[2], cbPalette[4], cbPalette[5], cbPalette[3])))
+
+ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean.pdf", plot = plot_3.1.1, 
+       device = "pdf", width = 10, height = 8, units = "in", useDingbats=FALSE)
+ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean.jpeg", plot = plot_3.1.1, 
+       device = "jpeg", width = 10, height = 8, units = "in")
 
 # just Euphrasia vigursii and tetraquetra, ready for model comparison
 
