@@ -295,6 +295,9 @@ levels(survivaldata$animal)[10] <- "Cystopteris dickieana"
 
 # add annual perennial, functional group, and Nodes
 allgrowth <- fread("./Data/Many_hosts/Allgrowthmeasurements1.csv")
+# for SI, replicates of each host.
+fwrite(x = allgrowth[, .(Replicates = .N), by = .(Name)], file = "")
+
 colnames(allgrowth) <- gsub(pattern = " ", replacement = "_", x = colnames(allgrowth))
 
 # select the columns needed
