@@ -394,11 +394,12 @@ write.csv(x = ehavcv <- cbind(Response = "Survival",VCVapply(eha.1)),
 
 ##### Part 5: End of season reproductive nodes #####
 
+allgrowth<- fread("/Users/mbrown/OneDrive - University of Edinburgh/Euphrasia Experiment 1 HOSTS/GROWTH EXPT DATA/Allgrowthmeasurements1.csv", na.strings = "-")
 # need to merge to get transplant date
-allgrowth2<-allgrowth[, c("Unique_ID", "ID_No", "AnnPer", "Functional_group", "CSR", "Family", "Name", "C.R.Nodes.F")]
+allgrowth2<-allgrowth[, c("Unique_ID", "ID_No", "AnnPer", "Functional group", "CSR", "Family", "Name", "C.R.Nodes.F")]
 allgrowth3 <- allgrowth2[unique(survivaldata.2[,c("Unique_ID", "Transplant.Date")]), on = "Unique_ID"][Name != "No host"]
 # make sure data is of right type
-names_factors3 <- c("Name", "AnnPer", "Functional_group", "animal")
+names_factors3 <- c("Name", "AnnPer", "Functional group", "animal")
 for (col in names_factors3) set(allgrowth3, j=col, value=as.factor(allgrowth3[[col]]))
 # check tree and animal match
 setdiff(constraint.2$tip.label, unique(allgrowth3$Name))
@@ -418,25 +419,15 @@ allgrowth3$Transplant.Date <- allgrowth3$Transplant.Date -97
 allgrowth3$AnnPer <- relevel(x = allgrowth3$AnnPer, ref = "Per")
 allgrowth3$Functional_group <- relevel(x = allgrowth3$Functional_group, ref = "Grass")
 
-# some summary stats
-
-allgrowth3[, .(Mean.Nodes = mean(C.R.Nodes.F)), by = "Name"][order(-Mean.Nodes)]
-# adjust transplant date
-allgrowth3$Transplant.Date <- allgrowth3$Transplant.Date -97
-
-# relevel factors
-allgrowth3$AnnPer <- relevel(x = allgrowth3$AnnPer, ref = "Per")
-allgrowth3$Functional_group <- relevel(x = allgrowth3$Functional_group, ref = "Grass")
-
 # plot of the functional groups
 opar <- par()
 par(mfrow = c(1,2), oma = c(1, 0, 0, 0))
 
-barplot_func <- allgrowth3[, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(Functional_group, Name)]
+barplot_func <- allgrowth3[, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(`Functional group`, Name)]
 names_keep <- unique(barplot_func[mean > 2,]$Name)
 
-barplot_func1 <- allgrowth3[, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(Functional_group)]
-barplot_func2 <- allgrowth3[Name %in% names_keep, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(Functional_group)]
+barplot_func1 <- allgrowth3[, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(`Functional group`)]
+barplot_func2 <- allgrowth3[Name %in% names_keep, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(`Functional group`)]
 
 setorder(barplot_func1, mean)
 setorder(barplot_func2, mean)
@@ -444,19 +435,15 @@ setorder(barplot_func2, mean)
 mid1 <- barplot(barplot_func1$mean, plot = FALSE)
 mid2 <- barplot(barplot_func2$mean, plot = FALSE)
 
-# save 6 x 10
+pdf(file = "./Figures/Many_hosts/Functional_group_plot.pdf", width = 10)
 barplot(barplot_func1$mean, names.arg = c("Woody", "Fern", "Forb", "Grass", "Legume"), ylim = c(0, 62), ylab = "Number of reproductive nodes")
-arrows(x0 = mid1, y0 = barplot_func1$mean , x1 = mid1, barplot_func1$mean + barplot_func1$sem, code=3, angle=90, length=0.1)
-text(1,59, expression(bold("a")), cex = 2)
+arrows(x0 = mid, y0 = barplot_func1$mean , x1 = mid, barplot_func1$mean + barplot_func1$sem, code=3, angle=90, length=0.1)
 barplot(barplot_func2$mean, names.arg = c("Woody", "Fern", "Forb", "Grass", "Legume"), ylim = c(0, 62))
-arrows(x0 = mid2, y0 = barplot_func2$mean , x1 = mid2, barplot_func2$mean + barplot_func2$sem, code=3, angle=90, length=0.1)
-text(1,59, expression(bold("b")), cex = 2)
+arrows(x0 = mid, y0 = barplot_func2$mean , x1 = mid, barplot_func2$mean + barplot_func2$sem, code=3, angle=90, length=0.1)
 mtext("Functional group", line = -2, side = 1, outer = TRUE, cex = 1.5)
 
-
 par(opar)
-
-
+dev.off()
 # model #
 prior.3<-list(R=list(V=diag(1), nu=0.002),
               G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
@@ -698,7 +685,7 @@ bootstrap_constraint_tr@phylo$tip.label[43] <- "Cystopteris dickieana"
 ### ROOTING TREE ###
 
 # root tree @ Cystopteris.
-bootstrap_constraint_tr2 <- treeio::root(phy = bootstrap_constraint_tr@phylo, outgroup = "Cystopteris dickieana")
+bootstrap_constraint_tr2 <- treeio::root(phy = bootstrap_constraint_tr, outgroup = "Cystopteris dickieana")
 # edge cannot be zero, so make it tiny
 bootstrap_constraint_tr2$edge.length[1] <- 1e-10
 
@@ -717,7 +704,7 @@ ggtree(phytools::force.ultrametric(constraint))+geom_nodelab()
 (p <- ggtree(phytools::force.ultrametric(bootstrap_constraint_tr2))+
   geom_tiplab(size = 4, font = "italic") + theme(axis.line = element_blank()) + 
   xlim_tree(1.5)+
-  geom_point2(aes(subset=!is.na(show_boot[-89]), fill = show_boot[-89]), pch=21, size = 3)+
+  geom_point2(aes(subset=!is.na(show_boot), fill = show_boot), pch=21, size = 3)+
   scale_fill_gradient(low = cbPalette[4], high = cbPalette[8], guide = "legend", name= "Bootstrap Support")+
   theme(legend.position = c(0.1, 0.85))+
   #geom_nodelab()+
@@ -875,6 +862,6 @@ ggsave(filename = "./Figures/Many_hosts/average_host.jpeg", plot = plot_4,
     geom_density_ridges()+geom_vline(xintercept = 0, col = "red", lty = 2, size = 1)+
     scale_x_continuous(limits = c(-0.2,1))
 
-ggsave(filename = "./Figures/Many_hosts/phylogenetic_variance.pdf", plot = plot_5, 
+ggsave(filename = "./Figures/Many_hosts/joint_variance_explained.pdf", plot = plot_5, 
        device = "pdf", width = 6, height = 5, units = "in")
 
