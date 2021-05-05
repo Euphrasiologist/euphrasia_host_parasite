@@ -54,6 +54,25 @@ expt2dat.2[, Population2 := ifelse(test = Population %in% c("A1766", "A1763"),
 
 expt2dat.2[is.na(Population2)]
 
+# replicates
+
+sp_reps <- rnodes3[, .(.N), by = .(Host_code, Euphrasia_sp2)][order(Euphrasia_sp2)]
+sp_reps <- data.frame(lapply(sp_reps, gsub, pattern = "PLA", replacement = "Plantago lanceolata", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "ACU", replacement = "Agrostis curtisii", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "HLA", replacement = "Holcus lanatus", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "LPE", replacement = "Lolium perenne", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "FOV", replacement = "Festuca ovina", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "OVU", replacement = "Origanum vulgare", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "DFL", replacement = "Deschampsia flexuosa", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "VCH", replacement = "Veronica chamaedrys", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "PMA", replacement = "Plantago maritima", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "UGA", replacement = "Ulex gallii", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "LCO", replacement = "Lotus corniculatus", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "CVU", replacement = "Calluna vulgaris", fixed = TRUE))
+sp_reps<- data.frame(lapply(sp_reps, gsub, pattern = "HPU", replacement = "Hypericum pulchrum", fixed = TRUE))
+
+fwrite(x =sp_reps, file = "./Data/Many_species/Replicates.csv")
+
 ##### Plot 1: Visualise quickly what is going on! #####
 # make sure height is numeric
 expt2dat.2$Height <- as.numeric(expt2dat.2$Height)
