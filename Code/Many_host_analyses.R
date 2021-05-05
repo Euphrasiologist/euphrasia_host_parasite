@@ -392,7 +392,6 @@ write.csv(x = ehavcv <- cbind(Response = "Survival",VCVapply(eha.1)),
 ##### Part 5: End of season reproductive nodes #####
 
 allgrowth<- fread("/Users/mbrown/OneDrive - University of Edinburgh/Euphrasia Experiment 1 HOSTS/GROWTH EXPT DATA/Allgrowthmeasurements1.csv", na.strings = "-")
-allgrowth[unique(allgrowth$Unique_ID)][, .(.N), by = .(Name)]
 # need to merge to get transplant date
 allgrowth2<-allgrowth[, c("Unique_ID", "ID_No", "AnnPer", "Functional group", "CSR", "Family", "Name", "C.R.Nodes.F")]
 allgrowth3 <- allgrowth2[unique(survivaldata.2[,c("Unique_ID", "Transplant.Date")]), on = "Unique_ID"][Name != "No host"]
@@ -448,8 +447,7 @@ prior.3<-list(R=list(V=diag(1), nu=0.002),
                      G2=list(V=diag(1), n=1, alpha.mu=rep(0, 1),alpha.V=diag(1)*1000)))
 
 mcmcfix3<-MCMCglmm(C.R.Nodes.F ~ AnnPer + Functional_group + Transplant.Date,
-                   random = ~Name
-                   + animal,
+                   random = ~Name + animal,
                    ginverse = list(animal=AinvULT2),
                    family="poisson", 
                    prior=prior.3, 
