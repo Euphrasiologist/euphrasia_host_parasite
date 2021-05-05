@@ -391,12 +391,13 @@ write.csv(x = ehavcv <- cbind(Response = "Survival",VCVapply(eha.1)),
 
 ##### Part 5: End of season reproductive nodes #####
 
-allgrowth<- read.csv("/Users/mbrown/OneDrive - University of Edinburgh/Euphrasia Experiment 1 HOSTS/GROWTH EXPT DATA/Allgrowthmeasurements1.csv", na.strings = "-")
+allgrowth<- fread("/Users/mbrown/OneDrive - University of Edinburgh/Euphrasia Experiment 1 HOSTS/GROWTH EXPT DATA/Allgrowthmeasurements1.csv", na.strings = "-")
+allgrowth[unique(allgrowth$Unique_ID)][, .(.N), by = .(Name)]
 # need to merge to get transplant date
-allgrowth2<-allgrowth[, c("Unique_ID", "ID_No", "AnnPer", "Functional_group", "CSR", "Family", "Name", "C.R.Nodes.F")]
+allgrowth2<-allgrowth[, c("Unique_ID", "ID_No", "AnnPer", "Functional group", "CSR", "Family", "Name", "C.R.Nodes.F")]
 allgrowth3 <- allgrowth2[unique(survivaldata.2[,c("Unique_ID", "Transplant.Date")]), on = "Unique_ID"][Name != "No host"]
 # make sure data is of right type
-names_factors3 <- c("Name", "AnnPer", "Functional_group", "animal")
+names_factors3 <- c("Name", "AnnPer", "Functional group", "animal")
 for (col in names_factors3) set(allgrowth3, j=col, value=as.factor(allgrowth3[[col]]))
 # check tree and animal match
 setdiff(constraint.2$tip.label, unique(allgrowth3$Name))
@@ -416,14 +417,39 @@ allgrowth3$Transplant.Date <- allgrowth3$Transplant.Date -97
 allgrowth3$AnnPer <- relevel(x = allgrowth3$AnnPer, ref = "Per")
 allgrowth3$Functional_group <- relevel(x = allgrowth3$Functional_group, ref = "Grass")
 
+# plot of the functional groups
+opar <- par()
+par(mfrow = c(1,2), oma = c(1, 0, 0, 0))
 
+barplot_func <- allgrowth3[, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(`Functional group`, Name)]
+names_keep <- unique(barplot_func[mean > 2,]$Name)
+
+barplot_func1 <- allgrowth3[, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(`Functional group`)]
+barplot_func2 <- allgrowth3[Name %in% names_keep, .(mean = mean(C.R.Nodes.F), sem = sd(C.R.Nodes.F)/sqrt(.N)), by = .(`Functional group`)]
+
+setorder(barplot_func1, mean)
+setorder(barplot_func2, mean)
+
+mid1 <- barplot(barplot_func1$mean, plot = FALSE)
+mid2 <- barplot(barplot_func2$mean, plot = FALSE)
+
+pdf(file = "./Figures/Many_hosts/Functional_group_plot.pdf", width = 10)
+barplot(barplot_func1$mean, names.arg = c("Woody", "Fern", "Forb", "Grass", "Legume"), ylim = c(0, 62), ylab = "Number of reproductive nodes")
+arrows(x0 = mid, y0 = barplot_func1$mean , x1 = mid, barplot_func1$mean + barplot_func1$sem, code=3, angle=90, length=0.1)
+barplot(barplot_func2$mean, names.arg = c("Woody", "Fern", "Forb", "Grass", "Legume"), ylim = c(0, 62))
+arrows(x0 = mid, y0 = barplot_func2$mean , x1 = mid, barplot_func2$mean + barplot_func2$sem, code=3, angle=90, length=0.1)
+mtext("Functional group", line = -2, side = 1, outer = TRUE, cex = 1.5)
+
+par(opar)
+dev.off()
 # model #
 prior.3<-list(R=list(V=diag(1), nu=0.002),
               G=list(G1=list(V=diag(1), nu=1, alpha.mu=rep(0,1), alpha.V=diag(1)*1000),
                      G2=list(V=diag(1), n=1, alpha.mu=rep(0, 1),alpha.V=diag(1)*1000)))
 
 mcmcfix3<-MCMCglmm(C.R.Nodes.F ~ AnnPer + Functional_group + Transplant.Date,
-                   random = ~Name + animal,
+                   random = ~Name
+                   + animal,
                    ginverse = list(animal=AinvULT2),
                    family="poisson", 
                    prior=prior.3, 
