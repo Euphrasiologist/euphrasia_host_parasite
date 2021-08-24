@@ -299,30 +299,44 @@ dat <- dat[meandat, on = .(Host_code)]
   ggplot(aes(x = reorder(Host_code, mean) , y = mean))+
   geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem, group=Euphrasia_sp2), position = position_dodge(width = 0.9), width=0.6)+
   geom_point(aes(fill = Euphrasia_sp2), position = position_dodge(width = 0.9), size=4, pch=21, stroke=1)+
-  facet_wrap(~Population)+
-  geom_text(data = data.frame(mean = rep(5,6),Host_code = rep("HPU",6), Population = c("A1766",
-                                                                       "T1761",
-                                                                       "V1761",
-                                                                       "M1767",
-                                                                       "M1768",
-                                                                       "M1769")), label = letters[1:6], nudge_x = 0.5, 
-            nudge_y = -0.15, size=8)+
-  theme_bw()+ theme(strip.text.x = element_blank(),#element_text(size=20),
+  facet_wrap(~Euphrasia_sp2, nrow = 1)+
+    geom_text(data = data.frame(mean = rep(5,4),
+                                Host_code = rep("HPU",4),
+                                Euphrasia_sp2 = c("Euphrasia anglica",
+                                                  "Euphrasia micrantha",
+                                                  "Euphrasia tetraquetra",
+                                                  "Euphrasia vigursii")), 
+              label = letters[1:4], 
+              nudge_x = 0.5, 
+              nudge_y = -0.15, 
+              size=8)+
+  theme_bw()+ theme(strip.text.x = element_blank(),
                     strip.background = element_rect(colour="white", fill="white"),
                     axis.line.x = element_line(colour = "black"),
                     panel.grid.major = element_blank(), 
                     panel.grid.minor = element_blank(),
-                    axis.text.x = element_text(angle = 60, hjust = 1),
+                    axis.text.x = element_text(angle = 60, hjust = 1, size = 15),
+                    axis.text.y = element_text(size = 20),
                     axis.title.x.bottom = element_text(size = 20),
                     axis.title.y.left = element_text(size = 20),
-                    legend.title = element_text(size = 20),
-                    legend.text = element_text(face = "italic"), panel.spacing = unit(0, "lines"))+
+                    panel.border = element_rect(colour = "black", fill=NA, size=2),
+                    panel.spacing.x = unit(0.5, "lines"),
+                    legend.title = element_text(size = 14.7),
+                    legend.text = element_text(face = "italic", size = 11), panel.spacing = unit(0, "lines"))+
   xlab(label = "Host Species")+
-  ylab(label = expression(paste("log(", italic("Euphrasia"), " nodes)")))+
-  scale_fill_manual(name = expression(paste(italic("Euphrasia"), " species")), 
-                    limits = c("Euphrasia anglica", "Euphrasia tetraquetra", "Euphrasia vigursii", "Euphrasia micrantha"),
-                    values = c(cbPalette[2], cbPalette[4], cbPalette[5], cbPalette[3])))
-  
+  #ylab(label = expression(paste(log[e], "(", italic("Euphrasia"), " nodes)")))+
+  ylab(label = expression(paste(italic("Euphrasia"), " reproductive nodes")))+
+  scale_y_continuous(breaks = c(0,0.6931472, 1.609438,2.302585,3.218876,4.60517), # 1,2, 5, 10, 50, 100
+                       labels = round(c(exp(0),exp(0.6931472), exp(1.609438), exp(2.302585), exp(3.218876), exp(4.60517)), 0)) +
+  scale_fill_manual(name = "\n      Host Species", 
+                    limits = c("Euphrasia anglica", "Euphrasia micrantha", "Euphrasia tetraquetra", "Euphrasia vigursii"),
+                    labels = c("HPU = Hypericum pulchrum",
+                               "CVU = Calluna vulgaris",
+                               "OVU = Origanum vulgare",
+                               "HLA = Holcus lanatus\nUGA = Ulex gallii\nPMA = Plantago maritima\nFOV = Festuca ovina\nPLA = Plantago lanceolata\nDFL = Deschampsia flexuosa\nVCH = Veronica chamaedrys\nACU = Agrostis curtisii\nLPE = Lolium perenne\nLCO = Lotus corniculatus"),
+                    values = c(cbPalette[2], cbPalette[3], cbPalette[4], cbPalette[5]), 
+                    guide = guide_legend(override.aes = list(color = "white", size = 0.001, fill = "white")))
+  )
 
 ggsave(filename = "./Figures/Many_species/population_cum_nodes.pdf", plot = plot_3.1, 
        device = "pdf", width = 10, height = 6, units = "in", useDingbats=FALSE)
@@ -330,47 +344,54 @@ ggsave(filename = "./Figures/Many_species/population_cum_nodes.jpeg", plot = plo
        device = "jpeg", width = 10, height = 6, units = "in")
 
 dat$Host_code <- factor(dat$Host_code, levels = unique(dat$Host_code[order(dat$meanH)]))
+
+levels(dat$Euphrasia_sp2) <- c("Euphrasia anglica", "Euphrasia micrantha", "Euphrasia tetraquetra", "Euphrasia vigursii")
+
 (plot_3.1.1<- ggplot(dat, aes(x = meanH , y = mean))+
     geom_errorbar(aes(ymin=mean-sem, ymax=mean+sem, group=Euphrasia_sp2), position = position_dodge(width = 0.9), width=0.1)+
-    ggrepel::geom_text_repel(aes(label = Host_code), box.padding = 1.5)+
-    geom_point(fill="grey", position = position_dodge(width = 0.9), size=4, pch=21, stroke=1)+
-    facet_wrap(~Euphrasia_sp2)+
+    ggrepel::geom_text_repel(aes(label = Host_code), box.padding = 1.5, max.overlaps = 30)+
+    geom_point(aes(fill=Euphrasia_sp2), position = position_dodge(width = 0.9), size=4, pch=21, stroke=1)+
+    facet_wrap(~Euphrasia_sp2, nrow = 1)+
     geom_abline(slope=1, intercept=0, col="red", lty=2)+
     geom_text(data = data.frame(mean = rep(5,4),meanH = rep(0,4), Euphrasia_sp2 = c("Euphrasia anglica", 
-                                                                                    "Euphrasia vigursii",
                                                                                     "Euphrasia micrantha",
-                                                                                    "Euphrasia tetraquetra")), label = letters[1:4], nudge_x = -0.5, 
+                                                                                    "Euphrasia tetraquetra",
+                                                                                    "Euphrasia vigursii")), label = letters[5:8], nudge_x = -0.1, 
               nudge_y = 0, size=8)+
-    geom_text(data = data.frame(mean = rep(5,4),meanH = rep(2,4), Euphrasia_sp2 = c("Euphrasia anglica", 
-                                                                                    "Euphrasia vigursii",
-                                                                                    "Euphrasia micrantha",
-                                                                                    "Euphrasia tetraquetra")), label = c(expression(paste(italic("Euphrasia anglica"))), 
-                                                                                                                                                 expression(paste(italic("Euphrasia vigursii"))),
-                                                                                                                                                                         expression(paste(italic("Euphrasia micrantha"))),
-                                                                                                                                                                                                 expression(paste(italic("Euphrasia tetraquetra")))), nudge_x = -0.5, 
-              nudge_y = 0, size=8)+
-    theme_bw()+ theme(strip.text.x = element_blank(),#element_text(size=20),
+    theme_bw()+ theme(strip.text.x = element_blank(),
                       strip.background = element_rect(colour="white", fill="white"),
                       axis.line.x = element_line(colour = "black"),
                       panel.grid.major = element_blank(), 
                       panel.grid.minor = element_blank(),
-                      axis.text.x = element_text(size = 10),
-                      axis.text.y = element_text(size = 10),
+                      axis.text.x = element_text(size = 15),
+                      axis.text.y = element_text(size = 20),
                       axis.title.x.bottom = element_text(size = 20),
                       axis.title.y.left = element_text(size = 20),
+                      panel.border = element_rect(colour = "black", fill=NA, size=2),
+                      panel.spacing.x = unit(0.5, "lines"),
                       legend.title = element_text(size = 20),
-                      legend.text = element_text(face = "italic"), panel.spacing = unit(0, "lines"))+
-    ylab(label = expression(paste("log(", italic("Euphrasia"), " nodes per host)")))+
-    xlab(label = expression(paste("log(Mean ", italic("Euphrasia"), " nodes per host)")))+
-    #scale_x_continuous(breaks = unique(dat$meanH), labels = 1:13)+
+                      legend.text = element_text(face = "italic", size = 15), panel.spacing = unit(0, "lines"))+
+    ylab(label = expression(paste( italic("Euphrasia"), " reproductive nodes")))+
+    xlab(label = expression(paste("Mean ", italic("Euphrasia"), " reproductive nodes per host")))+
+    scale_y_continuous(breaks = c(0,0.6931472, 1.609438,2.302585,3.218876,4.60517), # 1,2, 5, 10, 50, 100
+                       labels = round(c(exp(0),exp(0.6931472), exp(1.609438), exp(2.302585), exp(3.218876), exp(4.60517)), 0)) +
+    scale_x_continuous(breaks = c(0, 0.6931472, 1.609438, 2.70805), 
+                       labels = round(c(exp(0), exp(0.6931472), exp(1.609438), exp(2.70805)), 0)) +
     scale_fill_manual(name = expression(paste(italic("Euphrasia"), " species")), 
-                      limits = c("Euphrasia anglica", "Euphrasia tetraquetra", "Euphrasia vigursii", "Euphrasia micrantha"),
-                      values = c(cbPalette[2], cbPalette[4], cbPalette[5], cbPalette[3])))
+                      limits = c("Euphrasia anglica", "Euphrasia micrantha", "Euphrasia tetraquetra", "Euphrasia vigursii"),
+                      values = c(cbPalette[2], cbPalette[3], cbPalette[4], cbPalette[5])))
 
-ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean.pdf", plot = plot_3.1.1, 
-       device = "pdf", width = 10, height = 8, units = "in", useDingbats=FALSE)
-ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean.jpeg", plot = plot_3.1.1, 
-       device = "jpeg", width = 10, height = 8, units = "in")
+(plot_3.1_tes <- cowplot::plot_grid(plot_3.1, plot_3.1.1, nrow = 2, scale = 0.9))
+
+ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean_tes_bt.pdf", plot = plot_3.1_tes, 
+       device = "pdf", width = 17, height = 9, units = "in", useDingbats=FALSE)
+ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean_tes_bt.jpeg", plot = plot_3.1_tes, 
+       device = "jpeg", width = 17, height = 9, units = "in")
+
+#ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean.pdf", plot = plot_3.1.1, 
+ #      device = "pdf", width = 10, height = 8, units = "in", useDingbats=FALSE)
+#ggsave(filename = "./Figures/Many_species/population_cum_nodes_mean.jpeg", plot = plot_3.1.1, 
+ #      device = "jpeg", width = 10, height = 8, units = "in")
 
 # just Euphrasia vigursii and tetraquetra, ready for model comparison
 

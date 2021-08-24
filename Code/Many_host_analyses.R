@@ -316,7 +316,7 @@ survivaldata.2$Functional_group <- relevel(survivaldata.2$Functional_group, ref 
 # probability of survival
 survivaldata.2$y <- (survivaldata.2$y -1)*-1 
 # make transplant date start at day 97 (=0)
-survivaldata.2$Transplant.Date <- survivaldata.2$Transplant.Date -97
+survivaldata.2$Transplant.Date <- survivaldata.2$Transplant.Date - 97
 
 # prior for the event history analysis
 prior.eha <-list(R=list(V=diag(1), fix=1), 
@@ -461,6 +461,7 @@ mcmcfix3<-MCMCglmm(C.R.Nodes.F ~ AnnPer + Functional_group + Transplant.Date,
                    verbose = TRUE,
                    pr=TRUE)
 summary(mcmcfix3)
+
 
 mcmc.fix3.plot <- function(){
   x <- seq(0,68,1)
@@ -628,9 +629,13 @@ surv_plot_dat2[, Name := Name[nafill(replace(.I, is.na(Name), NA), "locf")]]
 # May == 1, June == 2, July == 3, August == 4, September == 5
 
 surv_plot_dat3 <- surv_plot_dat2[Family %in% c("Poaceae", "Fabaceae")]
+surv_plot_dat3_tes <- surv_plot_dat2[Functional_group %in% c("Forb", "Grass", "Legume")]
+
 surv_plot_dat3[, Family := ifelse(Family == "Poaceae", yes = "a", no = "b")]
 # make time numeric for smooth interpolation
 surv_plot_dat3$Time <- as.numeric(surv_plot_dat3$Time)
+surv_plot_dat3_tes$Time <- as.numeric(surv_plot_dat3_tes$Time)
+
 
   (plot_1 <- ggplot(surv_plot_dat3, 
                  aes(x=Time, y=y,group=Name))+
@@ -664,8 +669,105 @@ surv_plot_dat3$Time <- as.numeric(surv_plot_dat3$Time)
                 method = "glm", 
                 method.args = list(family = "binomial"), 
                 se = TRUE, size = 2))
+
+surv_plot_dat3_tes$Functional_group <- as.factor(surv_plot_dat3_tes$Functional_group)
+levels(surv_plot_dat3_tes$Functional_group) <- c("a", "b", "c") # f, g, l
+
+
+(plot_1_tes <- ggplot(surv_plot_dat3_tes, 
+                  aes(x=Time, y=y,group=Name))+
+    geom_point(alpha=0.1, position = position_jitter(width = 0.2, height = 0.2))+
+    facet_wrap(~Functional_group)+
+    geom_smooth(aes(x=Time, y=y, col = Functional_group), 
+                method = "glm", 
+                method.args = list(family = "binomial"), 
+                se = FALSE, size = 1)+
+    ylim(c(0,1))+
+    theme_bw()+
+    ylab(label = "Probability of survival")+
+    labs(colour = "Species")+
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          legend.title = element_text(size = 20),
+          strip.background = element_blank(),
+          strip.text.x = element_text(size = 20, hjust = 0, face = "bold", family = "Helvetica"),
+          legend.text = element_text(face = "italic"),
+          legend.position = "none",
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_rect(colour = "black", fill=NA, size=2),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black")) +
+    scale_color_manual(values = alpha(c(cbPalette[7], cbPalette[4], cbPalette[6]), 0.3)) + 
+    scale_x_continuous(breaks = 1:5, labels =  c("May", "June", "July", "August", "September"))+
+    new_scale_colour()+
+    scale_color_manual(values = alpha(c(cbPalette[7], cbPalette[4], cbPalette[6]), 1))+
+    geom_smooth(aes(x=Time, y=y, col = Functional_group, group = Functional_group), 
+                method = "glm", 
+                method.args = list(family = "binomial"), 
+                se = TRUE, size = 2))
+
+
+#
+surv_plot_dat3_tes$AnnPer2 <- ifelse(surv_plot_dat3_tes$AnnPer == "Ann", "d", "e")
+
+(plot_1_tes_ann_per <- ggplot(surv_plot_dat3_tes, 
+                      aes(x=Time, y=y, group=Name))+
+    geom_point(alpha=0.1, position = position_jitter(width = 0.2, height = 0.2))+
+    facet_wrap(~AnnPer2)+
+    geom_smooth(aes(x=Time, y=y, col = AnnPer2), 
+                method = "glm", 
+                method.args = list(family = "binomial"), 
+                se = FALSE, size = 1)+
+    ylim(c(0,1))+
+    theme_bw()+
+    ylab(label = "Probability of survival")+
+    labs(colour = "Species")+
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          legend.title = element_text(size = 20),
+          strip.background = element_blank(),
+          strip.text.x = element_text(size = 20, hjust = 0, face = "bold", family = "Helvetica"),
+          legend.text = element_text(face = "italic"),
+          legend.position = "none",
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_rect(colour = "black", fill=NA, size=2),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black")) +
+    scale_color_manual(values = alpha(c("black", "black"), 0.3)) + 
+    scale_x_continuous(breaks = 1:5, labels =  c("May", "June", "July", "August", "September"))+
+    new_scale_colour()+
+    scale_color_manual(values = alpha(c("black", "black"), 1))+
+    geom_smooth(aes(x=Time, y=y, col = AnnPer, group = AnnPer), 
+                method = "glm", 
+                method.args = list(family = "binomial"), 
+                se = TRUE, size = 2))
+
+fig_1_tes <- cowplot::plot_grid(plot_1_tes, plot_1_tes_ann_per, nrow = 2, label_size = 20)
+
+library(grid); library(gridExtra)
+#create common x and y labels
+y.grob <- textGrob("Probability of survival", 
+                   gp=gpar(fontface="bold", col="black", fontsize=20), rot=90)
+
+x.grob <- textGrob("Time", 
+                   gp=gpar(fontface="bold", col="black", fontsize=20))
+#add to plot
+
+fig_1_tes_labs <- grid.arrange(arrangeGrob(fig_1_tes, left = y.grob, bottom = x.grob))
+
+ggsave(filename = "./Figures/Many_hosts/fig_1_tes_labs.pdf", plot = fig_1_tes_labs, 
+       device = "pdf", width = 10, height = 6, units = "in")
+ggsave(filename = "./Figures/Many_hosts/fig_1_tes_labs.jpeg", plot = fig_1_tes_labs, 
+       device = "jpeg", width = 10, height = 6, units = "in")
   
-  
+ggsave(filename = "./Figures/Many_hosts/two_families_survival.pdf", plot = plot_1, 
+       device = "pdf", width = 7, height = 6, units = "in")
+ggsave(filename = "./Figures/Many_hosts/two_families_survival.jpeg", plot = plot_1, 
+       device = "jpeg", width = 7, height = 6, units = "in")
+
+#
 ggsave(filename = "./Figures/Many_hosts/two_families_survival.pdf", plot = plot_1, 
        device = "pdf", width = 7, height = 6, units = "in")
 ggsave(filename = "./Figures/Many_hosts/two_families_survival.jpeg", plot = plot_1, 
