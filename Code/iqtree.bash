@@ -12,4 +12,11 @@
 # -m - select best fit substitution model and merge partitions to stop model overfitting.
 # -spp - specify partition file allowing for different evolutionary models per substitution
 
-iqtree -s Nucleotide\ alignment\ 7.phy -bb 1000 -pre 270220 -g constraint_tree_exp_1_3_unrooted.newick -nt AUTO -redo -m TESTNEWMERGE -spp Partition_file.nexus
+iqtree -s Nucleotide\ alignment\ 7.phy \
+-bb 1000 \
+-pre 270220 \
+-g constraint_tree_exp_1_3_unrooted.newick \
+-nt AUTO \
+-redo \
+-m TESTNEWMERGE \
+-spp Partition_file.nexus
