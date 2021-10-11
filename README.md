@@ -14,4 +14,6 @@
 
 **Keywords**: host range, parasitic plants, phylogenetic signal, parasite-host species interactions, Euphrasia, Orobanchaceae
 
-This repository contains all of the source code and data to reconstruct all analyses and figures. Paper in revision at New Phytologist.
+This repository contains all of the source code and data to reconstruct all analyses and figures.
+
+The paper is published in New Phytologist. See <a href="https://doi.org/10.1111/nph.17752">*here*</a> for the open access paper.
